@@ -1,0 +1,52 @@
+path: /Users/nielspfeffer/Projects/neumes-playground/backend/datasets/neumes
+train: images/train
+val: images/val
+names:
+  0: punctum
+  1: clivis
+  2: podatus
+  3: torculus
+  4: scandicus
+  5: climacus
+  6: porrectus
+  7: pes
+  8: virga
+  9: oriscus
+  10: quilisma
+  11: stropha
+  12: pressus
+  13: bistropha
+  14: tristropha
+  15: bivirga
+  16: trivirga
+  17: pes subbipunctis
+  18: scandicus flexus
+  19: torculus resupinus
+  20: porrectus flexus
+  21: uncinus
+  22: celeriter
+  23: salicus
+  24: apostropha
+  25: virga episema
+  26: clivis episema
+  27: climacus episema
+  28: apostropha episema
+  29: cephalicus
+  30: equaliter
+  31: inferius
+  32: levare
+  33: mediocriter
+  34: pressionem
+  35: sursum
+  36: trigon
+  37: pes liquescens
+  38: torculus liquescens
+  39: pes quadratus
+  40: pes quadratus subbipunctis
+  41: tenete
+  42: porrectus subbipunctis
+  43: expectate
+  44: scandicus climacus
+  45: pes subtripunctis
+  46: pes praebipunctis
+  47: clivis episema praebipunctis

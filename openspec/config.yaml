@@ -1,0 +1,39 @@
+schema: spec-driven
+
+context: |
+  # Neume Annotation Tool
+
+  A web application for annotating manuscript pages with rectangular zones
+  that can be classified as syllables (with text) or neumes (with type selection).
+
+  ## Tech Stack
+  - Build Tool: Vite
+  - Framework: React 18 + TypeScript (strict mode)
+  - UI Library: Material-UI v5
+  - State Management: useReducer + Immer (stack-based undo/redo)
+  - Canvas: Native Canvas API
+
+  ## Architecture
+  - State is managed via React Context with a history-aware reducer
+  - Annotations store normalized coordinates (0-1) relative to image dimensions
+  - Auto-saves to localStorage with debounced persistence
+
+  ## Domain: Medieval Music Notation
+  - Neumes are symbols used in medieval music manuscripts (before modern staff notation)
+  - Adiastematic neumes indicate melodic direction but not exact pitch
+  - Common neume types: punctum, virga, pes, clivis, torculus, porrectus, etc.
+  - Syllables are the text being sung, with neumes placed above them
+
+  ## Conventions
+  - Components in src/components/
+  - State management in src/state/ (types, reducer, actions, context)
+  - Custom hooks in src/hooks/
+  - Data/constants in src/data/
+
+rules:
+  proposal:
+    - Consider impact on undo/redo history
+    - Maintain normalized coordinate system for annotations
+  tasks:
+    - Each task should be independently testable
+    - UI changes should preserve existing keyboard shortcuts

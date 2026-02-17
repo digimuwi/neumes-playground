@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "htr-service"
+version = "0.1.0"
+description = "HTR backend service for medieval manuscript syllable recognition"
+requires-python = ">=3.11"
+dependencies = [
+    "kraken @ git+https://github.com/mittagessen/kraken.git",
+    "pyphen>=0.14.0",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pillow>=10.0.0",
+    "python-multipart>=0.0.6",
+    "shapely>=2.0.0",
+    "numpy>=1.24.0",
+    "ultralytics>=8.0.0",
+    "sahi>=0.11.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "httpx>=0.26.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]

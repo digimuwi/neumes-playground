@@ -1,0 +1,52 @@
+# Canonical neume type to YOLO class ID mapping.
+# Class IDs are assigned by list position (0-indexed).
+# APPEND ONLY: new types go at the end. Never remove or reorder existing entries.
+classes:
+  - punctum
+  - clivis
+  - podatus
+  - torculus
+  - scandicus
+  - climacus
+  - porrectus
+  - pes
+  - virga
+  - oriscus
+  - quilisma
+  - stropha
+  - pressus
+  - bistropha
+  - tristropha
+  - bivirga
+  - trivirga
+  - pes subbipunctis
+  - scandicus flexus
+  - torculus resupinus
+  - porrectus flexus
+  - uncinus
+  - celeriter
+  - salicus
+  - apostropha
+  - virga episema
+  - clivis episema
+  - climacus episema
+  - apostropha episema
+  - cephalicus
+  - equaliter
+  - inferius
+  - levare
+  - mediocriter
+  - pressionem
+  - sursum
+  - trigon
+  - pes liquescens
+  - torculus liquescens
+  - pes quadratus
+  - pes quadratus subbipunctis
+  - tenete
+  - porrectus subbipunctis
+  - expectate
+  - scandicus climacus
+  - pes subtripunctis
+  - pes praebipunctis
+  - clivis episema praebipunctis
