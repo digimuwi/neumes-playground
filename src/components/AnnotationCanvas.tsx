@@ -31,8 +31,23 @@ const MAX_ZOOM = 5;
 const POPOVER_WIDTH = 280;
 const POPOVER_HEIGHT = 100;
 const POPOVER_GAP = 8;
+const MOUSE_WHEEL_DELTA_THRESHOLD = 50;
 
 const TYPE_PRIORITY: Array<'syllable' | 'neume'> = ['syllable', 'neume'];
+
+function isApplePlatform(): boolean {
+  if (typeof navigator === 'undefined') return false;
+
+  const platform = navigator.platform || navigator.userAgent;
+  return /Mac|iPhone|iPad|iPod/i.test(platform);
+}
+
+function isDiscreteMouseWheelEvent(event: WheelEvent): boolean {
+  return (
+    event.deltaMode !== WheelEvent.DOM_DELTA_PIXEL ||
+    Math.abs(event.deltaY) >= MOUSE_WHEEL_DELTA_THRESHOLD
+  );
+}
 
 function sortAnnotationsForCycling(annotations: Annotation[]): Annotation[] {
   return [...annotations].sort((a, b) => {
@@ -514,10 +529,17 @@ export function AnnotationCanvas() {
     onResetView: handleResetView,
   });
 
-  // Handle Ctrl+wheel zoom
+  // Support Mac pinch zoom and desktop mouse-wheel zoom on Windows/Linux.
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
+      const isModifierZoom = e.ctrlKey || e.metaKey;
+      const isDesktopWheelZoom =
+        !isApplePlatform() &&
+        !isModifierZoom &&
+        Math.abs(e.deltaY) > Math.abs(e.deltaX) &&
+        isDiscreteMouseWheelEvent(e);
+
+      if (!isModifierZoom && !isDesktopWheelZoom) return;
       e.preventDefault();
 
       const canvas = canvasRef.current;
@@ -551,8 +573,12 @@ export function AnnotationCanvas() {
       const relMouseX = mouseX - baseCenterX;
       const relMouseY = mouseY - baseCenterY;
 
-      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      const zoomDirection = Math.sign(e.deltaY);
+      if (zoomDirection === 0) return;
+
+      const zoomFactor = zoomDirection < 0 ? 1.1 : 0.9;
       const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom * zoomFactor));
+      if (newZoom === zoom) return;
 
       // Adjust pan to keep mouse position stationary (in the relative coordinate system)
       const newPanX = relMouseX - (relMouseX - panX) * (newZoom / zoom);
