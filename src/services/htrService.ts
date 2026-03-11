@@ -3,7 +3,7 @@ import { Annotation, NeumeType, Rectangle, LineBoundary, OcrProgressEvent } from
 import { computeTextLines } from '../hooks/useTextLines';
 import { normalizePolygon, denormalizePolygon, rectToPolygon, polygonBounds } from '../utils/polygonUtils';
 
-const HTR_BASE_URL = 'http://localhost:8000';
+const HTR_BASE_URL = import.meta.env.VITE_HTR_BASE_URL || `${window.location.protocol}//${window.location.hostname}:8000`;
 
 // --- Backend response types (new nested format) ---
 
