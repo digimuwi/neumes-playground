@@ -34,7 +34,15 @@ pip install -e .
 python -m htr_service
 ```
 
-The service runs on `http://localhost:8000` with auto-reload enabled.
+By default the service binds to `0.0.0.0:8000` with auto-reload enabled, so it is reachable on `http://localhost:8000` and on the machine's network IP.
+
+Optional environment overrides:
+
+```bash
+HTR_HOST=0.0.0.0
+HTR_PORT=8000
+HTR_RELOAD=true
+```
 
 ## API Endpoints
 
