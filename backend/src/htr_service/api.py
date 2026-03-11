@@ -28,6 +28,7 @@ from .models.types import (
 )
 from .contribution import get_contribution, save_contribution, update_contribution_annotations
 from .contribution.storage import list_contributions
+from .cors import build_cors_options
 from .pipeline.geometry import extract_char_bboxes
 from .pipeline.neume_detection import detect_neumes, detect_neumes_direct
 from .pipeline.polygon_slicing import slice_line_polygon, syllable_x_ranges
@@ -53,21 +54,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS middleware for localhost development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:3000",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(CORSMiddleware, **build_cors_options())
 
 
 class RegionParseError(Exception):
