@@ -49,6 +49,17 @@ function isDiscreteMouseWheelEvent(event: WheelEvent): boolean {
   );
 }
 
+function isUnmodifiedZoomWheelEvent(event: WheelEvent): boolean {
+  if (event.ctrlKey || event.metaKey) return false;
+  if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return false;
+
+  if (isDiscreteMouseWheelEvent(event)) return true;
+
+  // MacBook trackpads report smooth pixel deltas, so don't filter them out
+  // just because they are not discrete mouse-wheel ticks.
+  return isApplePlatform() && event.deltaMode === WheelEvent.DOM_DELTA_PIXEL;
+}
+
 function sortAnnotationsForCycling(annotations: Annotation[]): Annotation[] {
   return [...annotations].sort((a, b) => {
     // Primary sort: by type priority (syllables first, then neumes)
@@ -529,15 +540,11 @@ export function AnnotationCanvas() {
     onResetView: handleResetView,
   });
 
-  // Support Mac pinch zoom and desktop mouse-wheel zoom on Windows/Linux.
+  // Support modifier-based zoom plus unmodified wheel/trackpad zoom gestures.
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       const isModifierZoom = e.ctrlKey || e.metaKey;
-      const isDesktopWheelZoom =
-        !isApplePlatform() &&
-        !isModifierZoom &&
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) &&
-        isDiscreteMouseWheelEvent(e);
+      const isDesktopWheelZoom = isUnmodifiedZoomWheelEvent(e);
 
       if (!isModifierZoom && !isDesktopWheelZoom) return;
       e.preventDefault();

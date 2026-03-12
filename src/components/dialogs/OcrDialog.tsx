@@ -14,6 +14,8 @@ import { OcrDialogState, OcrStage } from '../../state/types';
 
 function getStageMessage(stage: OcrStage): string {
   switch (stage) {
+    case 'detecting':
+      return 'Detecting notation...';
     case 'loading':
       return 'Loading model...';
     case 'segmenting':
