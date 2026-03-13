@@ -10207,7 +10207,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2070,
         "y": 671,
@@ -10216,7 +10216,7 @@
       }
     },
     {
-      "type": "climacus episema",
+      "type": "clivis episema",
       "bbox": {
         "x": 2455,
         "y": 664,
@@ -11314,7 +11314,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2079,
         "y": 2378,
@@ -11728,7 +11728,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2474,
         "y": 2944,

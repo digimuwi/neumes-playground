@@ -6493,7 +6493,7 @@
       }
     },
     {
-      "type": "clivis",
+      "type": "clivis episema",
       "bbox": {
         "x": 1861,
         "y": 3163,
@@ -7402,7 +7402,7 @@
       }
     },
     {
-      "type": "virga episema",
+      "type": "pes",
       "bbox": {
         "x": 1593,
         "y": 1067,

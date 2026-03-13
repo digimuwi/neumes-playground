@@ -10065,7 +10065,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "salicus",
       "bbox": {
         "x": 518,
         "y": 2736,
@@ -10371,7 +10371,7 @@
       }
     },
     {
-      "type": "virga",
+      "type": "pes quadratus",
       "bbox": {
         "x": 654,
         "y": 1631,
@@ -10560,7 +10560,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 857,
         "y": 687,

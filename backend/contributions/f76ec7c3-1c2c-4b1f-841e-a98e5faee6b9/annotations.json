@@ -8266,7 +8266,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 1837,
         "y": 2210,
@@ -8275,7 +8275,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2078,
         "y": 2766,
@@ -8284,7 +8284,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2536,
         "y": 3316,
@@ -8293,7 +8293,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 1773,
         "y": 2203,
@@ -8302,7 +8302,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 1810,
         "y": 2760,
@@ -8338,7 +8338,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 1770,
         "y": 1632,
@@ -8347,7 +8347,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2427,
         "y": 2578,
@@ -8356,7 +8356,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2124,
         "y": 2020,

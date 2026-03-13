@@ -3731,7 +3731,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2850,
         "y": 681,
@@ -4064,7 +4064,7 @@
       }
     },
     {
-      "type": "clivis episema",
+      "type": "porrectus",
       "bbox": {
         "x": 2006,
         "y": 3286,

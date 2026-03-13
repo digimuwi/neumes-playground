@@ -6443,7 +6443,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2161,
         "y": 662,
