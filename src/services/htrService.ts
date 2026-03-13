@@ -523,6 +523,27 @@ export async function getContribution(id: string): Promise<ContributionData> {
   };
 }
 
+export interface NeumeCrop {
+  type: string;
+  contribution_id: string;
+  bbox: { x: number; y: number; width: number; height: number };
+  crop_data_url: string;
+}
+
+/**
+ * Fetch neume crops across all contributions, optionally filtered by type.
+ */
+export async function listNeumes(type?: string): Promise<NeumeCrop[]> {
+  const params = type ? `?type=${encodeURIComponent(type)}` : '';
+  const response = await fetch(`${HTR_BASE_URL}/neumes${params}`);
+
+  if (!response.ok) {
+    throw new Error(`Failed to list neumes: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 /**
  * Update an existing contribution's annotations.
  */

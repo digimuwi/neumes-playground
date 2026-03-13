@@ -105,7 +105,7 @@ def _validate_contribution_id(contribution_id: str) -> None:
         raise ValueError(f"Invalid contribution ID: {contribution_id}")
 
 
-def _find_image_file(contribution_dir: Path) -> Path:
+def find_image_file(contribution_dir: Path) -> Path:
     """Find the image file in a contribution directory.
 
     Returns:
@@ -143,7 +143,7 @@ def get_contribution(contribution_id: str) -> dict:
         raise FileNotFoundError(f"Contribution not found: {contribution_id}")
 
     annotations_data = json.loads(annotations_path.read_text(encoding="utf-8"))
-    image_path = _find_image_file(contribution_dir)
+    image_path = find_image_file(contribution_dir)
 
     # Build base64 data URL
     mime_type = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"

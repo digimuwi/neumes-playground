@@ -108,6 +108,15 @@ class NeumeInput(BaseModel):
     bbox: BBox = Field(..., description="Bounding box in pixel coordinates")
 
 
+class NeumeCrop(BaseModel):
+    """A cropped neume image from a contribution."""
+
+    type: str = Field(..., description="Neume type (e.g., 'punctum', 'clivis')")
+    contribution_id: str = Field(..., description="ID of the source contribution")
+    bbox: BBox = Field(..., description="Bounding box in pixel coordinates")
+    crop_data_url: str = Field(..., description="Base64-encoded data URL of the cropped neume region")
+
+
 class LineInput(BaseModel):
     """A text line containing syllables for contribution."""
 

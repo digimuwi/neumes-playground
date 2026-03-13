@@ -11,6 +11,7 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import SearchIcon from '@mui/icons-material/Search';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import TableChartIcon from '@mui/icons-material/TableChart';
 import { useAppContext } from '../state/context';
 import { undo, redo, setImage, setOcrDialog, setError, setMetadata, loadState, setContributionId } from '../state/actions';
 import { exportMEI } from '../utils/meiExport';
@@ -19,6 +20,7 @@ import { parseAnnotationsJSON } from '../utils/jsonImport';
 import { contributeTrainingData, getContribution, updateContribution, TrainingType } from '../services/htrService';
 import { CantusSelectionDialog } from './CantusSelectionDialog';
 import { ContributionsDialog } from './ContributionsDialog';
+import { CrossSectionDialog } from './CrossSectionDialog';
 import { useCantusLookup } from '../hooks/useCantusLookup';
 import { useTrainingStatus } from '../hooks/useTrainingStatus';
 import { CantusChant } from '../services/cantusIndex';
@@ -36,6 +38,7 @@ export function Toolbar() {
   const cantusLookup = useCantusLookup();
   const training = useTrainingStatus();
   const [contributionsDialogOpen, setContributionsDialogOpen] = useState(false);
+  const [crossSectionOpen, setCrossSectionOpen] = useState(false);
   const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
   const [trainingType, setTrainingType] = useState<TrainingType>('both');
   const [trainingEpochs, setTrainingEpochs] = useState('');
@@ -358,6 +361,11 @@ export function Toolbar() {
           />
         </Tooltip>
       )}
+      <Tooltip title="Cross Section">
+        <IconButton onClick={() => setCrossSectionOpen(true)} color="inherit">
+          <TableChartIcon />
+        </IconButton>
+      </Tooltip>
       <Tooltip title="Start Training">
         <span>
           <IconButton onClick={handleTrainingClick} disabled={training.isActive} color="inherit">
@@ -493,6 +501,12 @@ export function Toolbar() {
         open={contributionsDialogOpen}
         onSelect={handleContributionSelect}
         onClose={() => setContributionsDialogOpen(false)}
+      />
+
+      {/* Cross section dialog */}
+      <CrossSectionDialog
+        open={crossSectionOpen}
+        onClose={() => setCrossSectionOpen(false)}
       />
 
       {/* Training configuration dialog */}

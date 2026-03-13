@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Generator, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
@@ -18,6 +18,7 @@ from .models.types import (
     ContributionSummary,
     ImageMetadata,
     Line,
+    NeumeCrop,
     NeumeDetection,
     ProgressEvent,
     RecognitionResponse,
@@ -26,7 +27,7 @@ from .models.types import (
     TrainingStatus,
     format_sse_event,
 )
-from .contribution import get_contribution, save_contribution, update_contribution_annotations
+from .contribution import find_image_file, get_contribution, save_contribution, update_contribution_annotations
 from .contribution.storage import list_contributions
 from .cors import build_cors_options
 from .pipeline.geometry import extract_char_bboxes
@@ -528,3 +529,72 @@ async def update_contribution_endpoint(
         id=contribution_id,
         message="Contribution updated successfully",
     )
+
+
+@app.get("/neumes", response_model=list[NeumeCrop])
+async def list_neumes(
+    type: Optional[str] = Query(None, description="Filter by neume type"),
+):
+    """List neume crops across all contributions.
+
+    Returns cropped images of individual neumes from all stored contributions,
+    optionally filtered by neume type.
+    """
+    import base64
+    import mimetypes
+
+    crops: list[NeumeCrop] = []
+
+    for contribution_id, contribution_path in list_contributions():
+        try:
+            annotations_data = json.loads(
+                (contribution_path / "annotations.json").read_text(encoding="utf-8")
+            )
+            neumes = annotations_data.get("neumes", [])
+            if not neumes:
+                continue
+
+            # Only load the image if there are matching neumes
+            matching = [n for n in neumes if type is None or n.get("type") == type]
+            if not matching:
+                continue
+
+            image_path = find_image_file(contribution_path)
+            img = Image.open(image_path)
+            if img.mode not in ("RGB", "L"):
+                img = img.convert("RGB")
+
+            mime = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"
+
+            for neume in matching:
+                bbox = neume["bbox"]
+                x, y, w, h = bbox["x"], bbox["y"], bbox["width"], bbox["height"]
+
+                # Clamp to image bounds
+                x = max(0, x)
+                y = max(0, y)
+                right = min(img.width, x + w)
+                bottom = min(img.height, y + h)
+
+                if right <= x or bottom <= y:
+                    continue
+
+                crop = img.crop((x, y, right, bottom))
+
+                # Encode crop as data URL
+                buf = io.BytesIO()
+                fmt = "PNG" if "png" in mime else "JPEG"
+                crop.save(buf, format=fmt)
+                b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+                crop_data_url = f"data:{mime};base64,{b64}"
+
+                crops.append(NeumeCrop(
+                    type=neume.get("type", ""),
+                    contribution_id=contribution_id,
+                    bbox=BBox(x=x, y=y, width=right - x, height=bottom - y),
+                    crop_data_url=crop_data_url,
+                ))
+        except Exception:
+            continue
+
+    return crops
