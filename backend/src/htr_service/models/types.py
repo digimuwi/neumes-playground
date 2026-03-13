@@ -108,6 +108,13 @@ class NeumeInput(BaseModel):
     bbox: BBox = Field(..., description="Bounding box in pixel coordinates")
 
 
+class NeumeRelabel(BaseModel):
+    """Request to relabel a neume in a contribution."""
+
+    bbox: BBox = Field(..., description="Bounding box identifying the neume to relabel")
+    new_type: str = Field(..., description="New neume type to assign")
+
+
 class NeumeCrop(BaseModel):
     """A cropped neume image from a contribution."""
 

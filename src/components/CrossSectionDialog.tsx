@@ -1,15 +1,20 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import {
+  Autocomplete,
   Box,
   CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
+  Menu,
+  MenuItem,
+  Popover,
+  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { listNeumes, NeumeCrop } from '../services/htrService';
-import { neumeTypes } from '../data/neumeTypes';
+import { listNeumes, relabelNeume, NeumeCrop } from '../services/htrService';
+import { neumeTypes, NeumeTypeInfo } from '../data/neumeTypes';
 import { computeOtsuThreshold, binarizeRegion } from '../utils/imageProcessing';
 
 interface CrossSectionDialogProps {
@@ -18,6 +23,8 @@ interface CrossSectionDialogProps {
 }
 
 interface BinarizedNeume {
+  /** Stable identity key for animation tracking */
+  key: string;
   crop: NeumeCrop;
   binarizedDataUrl: string;
 }
@@ -44,10 +51,9 @@ function binarizeCropDataUrl(dataUrl: string): Promise<string> {
       const threshold = computeOtsuThreshold(imageData);
       const binary = binarizeRegion(imageData, { x: 0, y: 0, width: 1, height: 1 }, threshold);
 
-      // Convert BinaryImage to black-on-white ImageData
       const outData = ctx.createImageData(binary.width, binary.height);
       for (let i = 0; i < binary.data.length; i++) {
-        const val = binary.data[i] === 1 ? 0 : 255; // foreground=black, background=white
+        const val = binary.data[i] === 1 ? 0 : 255;
         outData.data[i * 4] = val;
         outData.data[i * 4 + 1] = val;
         outData.data[i * 4 + 2] = val;
@@ -70,13 +76,40 @@ function binarizeCropDataUrl(dataUrl: string): Promise<string> {
   });
 }
 
+/** Build a stable key for a neume based on contribution + bbox */
+function neumeKey(crop: NeumeCrop): string {
+  return `${crop.contribution_id}:${crop.bbox.x},${crop.bbox.y},${crop.bbox.width},${crop.bbox.height}`;
+}
+
 const CROP_HEIGHT = 48;
+
+const filterNeumeOptions = (
+  options: NeumeTypeInfo[],
+  { inputValue }: { inputValue: string },
+) =>
+  options.filter((opt) =>
+    opt.name.toLowerCase().startsWith(inputValue.toLowerCase()),
+  );
 
 export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
   const [binarizedNeumes, setBinarizedNeumes] = useState<BinarizedNeume[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef(false);
+
+  // Context menu state
+  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
+  const [menuTarget, setMenuTarget] = useState<BinarizedNeume | null>(null);
+
+  // Relabel autocomplete popover state
+  const [relabelAnchor, setRelabelAnchor] = useState<HTMLElement | null>(null);
+  const [relabelTarget, setRelabelTarget] = useState<BinarizedNeume | null>(null);
+
+  // Set of neume keys currently being relabeled (show spinner)
+  const [relabelingKeys, setRelabelingKeys] = useState<Set<string>>(new Set());
+
+  // Set of neume keys recently moved (for entrance animation)
+  const [animatingKeys, setAnimatingKeys] = useState<Set<string>>(new Set());
 
   const loadNeumes = useCallback(async () => {
     setLoading(true);
@@ -87,18 +120,16 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
     try {
       const crops = await listNeumes();
 
-      // Binarize all crops in parallel (they're small images)
       const results = await Promise.all(
         crops.map(async (crop) => {
           if (abortRef.current) return null;
           try {
             const binarizedDataUrl = await binarizeCropDataUrl(crop.crop_data_url);
-            return { crop, binarizedDataUrl };
+            return { key: neumeKey(crop), crop, binarizedDataUrl };
           } catch {
-            // Skip crops that fail to binarize
             return null;
           }
-        })
+        }),
       );
 
       if (!abortRef.current) {
@@ -122,6 +153,84 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
     }
     loadNeumes();
   }, [open, loadNeumes]);
+
+  // Handle click (left or right) on a crop image
+  const handleCropClick = (
+    event: React.MouseEvent<HTMLElement>,
+    bn: BinarizedNeume,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setMenuAnchor(event.currentTarget);
+    setMenuTarget(bn);
+  };
+
+  const closeMenu = () => {
+    setMenuAnchor(null);
+    setMenuTarget(null);
+  };
+
+  const handleRelabelClick = () => {
+    // Transfer anchor from menu to popover
+    const anchor = menuAnchor;
+    const target = menuTarget;
+    closeMenu();
+    if (anchor && target) {
+      setRelabelAnchor(anchor);
+      setRelabelTarget(target);
+    }
+  };
+
+  const closeRelabel = () => {
+    setRelabelAnchor(null);
+    setRelabelTarget(null);
+  };
+
+  const handleRelabelSelect = async (
+    _event: React.SyntheticEvent,
+    value: NeumeTypeInfo | null,
+  ) => {
+    if (!value || !relabelTarget) return;
+
+    const target = relabelTarget;
+    const key = target.key;
+    const newType = value.type;
+    closeRelabel();
+
+    // Show spinner
+    setRelabelingKeys((prev) => new Set(prev).add(key));
+
+    try {
+      await relabelNeume(target.crop.contribution_id, target.crop.bbox, newType);
+
+      // Update the neume's type in state → it moves to the new row
+      setBinarizedNeumes((prev) =>
+        prev.map((bn) =>
+          bn.key === key
+            ? { ...bn, crop: { ...bn.crop, type: newType } }
+            : bn,
+        ),
+      );
+
+      // Trigger entrance animation on the moved item
+      setAnimatingKeys((prev) => new Set(prev).add(key));
+      setTimeout(() => {
+        setAnimatingKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(key);
+          return next;
+        });
+      }, 500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Relabel failed');
+    } finally {
+      setRelabelingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  };
 
   // Group binarized neumes by type
   const neumesByType = new Map<string, BinarizedNeume[]>();
@@ -192,24 +301,62 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
                       }}
                     >
                       <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-                        {instances.map((bn, idx) => (
-                          <Tooltip
-                            key={idx}
-                            title={`${info.name} — ${bn.crop.contribution_id.slice(0, 8)}`}
-                          >
-                            <Box
-                              component="img"
-                              src={bn.binarizedDataUrl}
-                              sx={{
-                                height: CROP_HEIGHT,
-                                border: '1px solid',
-                                borderColor: 'divider',
-                                borderRadius: 0.5,
-                                flexShrink: 0,
-                              }}
-                            />
-                          </Tooltip>
-                        ))}
+                        {instances.map((bn) => {
+                          const isRelabeling = relabelingKeys.has(bn.key);
+                          const isAnimating = animatingKeys.has(bn.key);
+
+                          return (
+                            <Tooltip
+                              key={bn.key}
+                              title={`${info.name} — ${bn.crop.contribution_id.slice(0, 8)}`}
+                            >
+                              <Box
+                                onClick={(e) => handleCropClick(e, bn)}
+                                onContextMenu={(e) => handleCropClick(e, bn)}
+                                sx={{
+                                  height: CROP_HEIGHT,
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  borderRadius: 0.5,
+                                  flexShrink: 0,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  '&:hover': { borderColor: 'primary.main' },
+                                  ...(isAnimating && {
+                                    animation: 'crossSectionFadeIn 0.5s ease-out',
+                                    '@keyframes crossSectionFadeIn': {
+                                      '0%': {
+                                        opacity: 0,
+                                        transform: 'scale(0.7)',
+                                        bgcolor: 'primary.light',
+                                      },
+                                      '50%': {
+                                        opacity: 1,
+                                        transform: 'scale(1.1)',
+                                      },
+                                      '100%': {
+                                        opacity: 1,
+                                        transform: 'scale(1)',
+                                      },
+                                    },
+                                  }),
+                                }}
+                              >
+                                {isRelabeling ? (
+                                  <CircularProgress size={20} sx={{ mx: 1 }} />
+                                ) : (
+                                  <Box
+                                    component="img"
+                                    src={bn.binarizedDataUrl}
+                                    sx={{ height: '100%', display: 'block' }}
+                                  />
+                                )}
+                              </Box>
+                            </Tooltip>
+                          );
+                        })}
                       </Box>
                     </Box>
                   </Box>
@@ -219,6 +366,54 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
           </Box>
         )}
       </DialogContent>
+
+      {/* Context menu */}
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={closeMenu}
+      >
+        <MenuItem onClick={handleRelabelClick}>Relabel...</MenuItem>
+      </Menu>
+
+      {/* Relabel autocomplete popover */}
+      <Popover
+        open={Boolean(relabelAnchor)}
+        anchorEl={relabelAnchor}
+        onClose={closeRelabel}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        slotProps={{ paper: { sx: { p: 1, width: 280 } } }}
+      >
+        <Autocomplete
+          size="small"
+          options={neumeTypes}
+          getOptionLabel={(option) => option.name}
+          filterOptions={filterNeumeOptions}
+          openOnFocus
+          autoHighlight
+          onChange={handleRelabelSelect}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Neume type"
+              autoFocus
+              variant="outlined"
+              size="small"
+            />
+          )}
+          renderOption={(props, option) => (
+            <li {...props} key={option.type}>
+              <Box>
+                <Typography variant="body2">{option.name}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {option.description}
+                </Typography>
+              </Box>
+            </li>
+          )}
+        />
+      </Popover>
     </Dialog>
   );
 }

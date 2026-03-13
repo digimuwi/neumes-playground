@@ -545,6 +545,36 @@ export async function listNeumes(type?: string): Promise<NeumeCrop[]> {
 }
 
 /**
+ * Relabel a single neume in a contribution by matching its bounding box.
+ */
+export async function relabelNeume(
+  contributionId: string,
+  bbox: { x: number; y: number; width: number; height: number },
+  newType: string,
+): Promise<void> {
+  const response = await fetch(
+    `${HTR_BASE_URL}/contributions/${encodeURIComponent(contributionId)}/neumes`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bbox, new_type: newType }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Relabel failed: ${response.status} ${response.statusText}`;
+    try {
+      const errorJson = JSON.parse(errorText);
+      if (errorJson.detail) errorMessage = errorJson.detail;
+    } catch {
+      // Use default error message
+    }
+    throw new Error(errorMessage);
+  }
+}
+
+/**
  * Update an existing contribution's annotations.
  */
 export async function updateContribution(

@@ -198,6 +198,50 @@ def update_contribution_annotations(
     annotations_path.write_text(json.dumps(updated, indent=2), encoding="utf-8")
 
 
+def relabel_neume(
+    contribution_id: str, bbox: dict, new_type: str
+) -> None:
+    """Relabel a single neume in a contribution by matching its bounding box.
+
+    Args:
+        contribution_id: UUID of the contribution.
+        bbox: Dict with x, y, width, height identifying the neume.
+        new_type: New neume type string.
+
+    Raises:
+        ValueError: If the contribution ID is invalid or no matching neume found.
+        FileNotFoundError: If the contribution does not exist.
+    """
+    _validate_contribution_id(contribution_id)
+
+    contribution_dir = CONTRIBUTIONS_DIR / contribution_id
+    annotations_path = contribution_dir / "annotations.json"
+
+    if not annotations_path.is_file():
+        raise FileNotFoundError(f"Contribution not found: {contribution_id}")
+
+    data = json.loads(annotations_path.read_text(encoding="utf-8"))
+    neumes = data.get("neumes", [])
+
+    found = False
+    for neume in neumes:
+        nb = neume.get("bbox", {})
+        if (
+            nb.get("x") == bbox["x"]
+            and nb.get("y") == bbox["y"]
+            and nb.get("width") == bbox["width"]
+            and nb.get("height") == bbox["height"]
+        ):
+            neume["type"] = new_type
+            found = True
+            break
+
+    if not found:
+        raise ValueError("No neume found with the given bounding box")
+
+    annotations_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
 def list_contributions() -> list[tuple[str, Path]]:
     """List all valid contributions in the contributions directory.
 

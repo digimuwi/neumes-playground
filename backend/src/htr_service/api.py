@@ -20,6 +20,7 @@ from .models.types import (
     Line,
     NeumeCrop,
     NeumeDetection,
+    NeumeRelabel,
     ProgressEvent,
     RecognitionResponse,
     Syllable,
@@ -27,7 +28,7 @@ from .models.types import (
     TrainingStatus,
     format_sse_event,
 )
-from .contribution import find_image_file, get_contribution, save_contribution, update_contribution_annotations
+from .contribution import find_image_file, get_contribution, relabel_neume, save_contribution, update_contribution_annotations
 from .contribution.storage import list_contributions
 from .cors import build_cors_options
 from .pipeline.geometry import extract_char_bboxes
@@ -528,6 +529,28 @@ async def update_contribution_endpoint(
     return ContributionResponse(
         id=contribution_id,
         message="Contribution updated successfully",
+    )
+
+
+@app.patch("/contributions/{contribution_id}/neumes", response_model=ContributionResponse)
+async def relabel_neume_endpoint(
+    contribution_id: str,
+    body: NeumeRelabel,
+):
+    """Relabel a single neume in a contribution by matching its bounding box."""
+    try:
+        relabel_neume(
+            contribution_id,
+            bbox=body.bbox.model_dump(),
+            new_type=body.new_type,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Contribution not found")
+    return ContributionResponse(
+        id=contribution_id,
+        message="Neume relabeled successfully",
     )
 
 
