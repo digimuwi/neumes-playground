@@ -22,13 +22,13 @@ export const initialHistoryState: HistoryState = {
   currentIndex: 0,
 };
 
-interface PersistedAppState extends Omit<AppState, 'selectedAnnotationIds' | 'ocrDialogState' | 'errorMessage' | 'lineBoundaries' | 'contributionId'> {
+interface PersistedAppState extends Omit<AppState, 'selectedAnnotationIds' | 'ocrDialogState' | 'errorMessage' | 'lineBoundaries' | 'contributionId' | 'metadata'> {
   lineBoundaries?: AppState['lineBoundaries'];
   contributionId?: string | null;
+  metadata?: AppState['metadata'];
   selectedAnnotationIds?: string[];
   // Legacy field for backward compatibility
   selectedAnnotationId?: string | null;
-  // metadata is persisted directly from AppState
 }
 
 export function loadStateFromStorage(): HistoryState {
@@ -52,9 +52,9 @@ export function loadStateFromStorage(): HistoryState {
         isNewlyCreated: persisted.isNewlyCreated,
         ocrDialogState: { mode: 'closed' },
         errorMessage: null,
-        metadata: persisted.metadata,
         lineBoundaries: persisted.lineBoundaries || [],
         contributionId: persisted.contributionId ?? null,
+        metadata: persisted.metadata,
       };
       return {
         states: [appState],
@@ -75,9 +75,9 @@ export function saveStateToStorage(state: AppState): void {
       annotations: state.annotations,
       selectedAnnotationIds: Array.from(state.selectedAnnotationIds),
       isNewlyCreated: state.isNewlyCreated,
-      metadata: state.metadata,
       lineBoundaries: state.lineBoundaries,
       contributionId: state.contributionId,
+      metadata: state.metadata,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
   } catch (e) {
@@ -119,7 +119,8 @@ export function historyReducer(state: HistoryState, action: Action): HistoryStat
     action.type === 'SET_OCR_DIALOG' ||
     action.type === 'SET_ERROR' ||
     action.type === 'SET_LINE_BOUNDARIES' ||
-    action.type === 'SET_CONTRIBUTION_ID'
+    action.type === 'SET_CONTRIBUTION_ID' ||
+    action.type === 'SET_METADATA'
   ) {
     const newStates = [...state.states];
     newStates[state.currentIndex] = newAppState;
@@ -229,11 +230,6 @@ function appReducer(state: AppState, action: Action): AppState {
         draft.lineBoundaries = [];
       });
 
-    case 'SET_METADATA':
-      return produce(state, (draft) => {
-        draft.metadata = action.payload;
-      });
-
     case 'SET_LINE_BOUNDARIES':
       return produce(state, (draft) => {
         draft.lineBoundaries = action.payload;
@@ -242,6 +238,11 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'SET_CONTRIBUTION_ID':
       return produce(state, (draft) => {
         draft.contributionId = action.payload;
+      });
+
+    case 'SET_METADATA':
+      return produce(state, (draft) => {
+        draft.metadata = { ...draft.metadata, ...action.payload };
       });
 
     default:

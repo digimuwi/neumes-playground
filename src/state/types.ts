@@ -106,8 +106,7 @@ export interface LineBoundary {
 }
 
 export interface DocumentMetadata {
-  cantusId?: string;
-  genre?: string;
+  [key: string]: unknown;
 }
 
 export interface AppState {
@@ -117,9 +116,9 @@ export interface AppState {
   isNewlyCreated: boolean;
   ocrDialogState: OcrDialogState;
   errorMessage: string | null;
-  metadata?: DocumentMetadata;
   lineBoundaries: LineBoundary[];
   contributionId: string | null;
+  metadata?: DocumentMetadata;
 }
 
 export interface HistoryState {
@@ -144,6 +143,6 @@ export type Action =
   | { type: 'SET_OCR_DIALOG'; payload: OcrDialogState }
   | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'CLEAR_ANNOTATIONS' }
-  | { type: 'SET_METADATA'; payload: DocumentMetadata }
   | { type: 'SET_LINE_BOUNDARIES'; payload: LineBoundary[] }
-  | { type: 'SET_CONTRIBUTION_ID'; payload: string | null };
+  | { type: 'SET_CONTRIBUTION_ID'; payload: string | null }
+  | { type: 'SET_METADATA'; payload: DocumentMetadata };

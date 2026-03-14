@@ -90,14 +90,14 @@ export function clearAnnotations(): Action {
   return { type: 'CLEAR_ANNOTATIONS' };
 }
 
-export function setMetadata(metadata: DocumentMetadata): Action {
-  return { type: 'SET_METADATA', payload: metadata };
-}
-
 export function setLineBoundaries(lineBoundaries: LineBoundary[]): Action {
   return { type: 'SET_LINE_BOUNDARIES', payload: lineBoundaries };
 }
 
 export function setContributionId(id: string | null): Action {
   return { type: 'SET_CONTRIBUTION_ID', payload: id };
+}
+
+export function setMetadata(metadata: DocumentMetadata): Action {
+  return { type: 'SET_METADATA', payload: metadata };
 }

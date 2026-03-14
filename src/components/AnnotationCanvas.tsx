@@ -7,7 +7,6 @@ import { OcrDialog } from './dialogs/OcrDialog';
 import { useCanvasDrawing } from '../hooks/useCanvasDrawing';
 import { useNeumeAssignment } from '../hooks/useNeumeAssignment';
 import { useTextLines, TextLine } from '../hooks/useTextLines';
-import { useSuggestion } from '../hooks/useSuggestion';
 import { useNeumeSuggestion } from '../hooks/useNeumeSuggestion';
 import { drawAssignmentCurve } from '../hooks/useCurveDrawing';
 import { Annotation, NeumeType, OcrProgressEvent, Rectangle } from '../state/types';
@@ -176,13 +175,6 @@ export function AnnotationCanvas() {
     state.selectedAnnotationIds.size === 1
       ? state.annotations.find((a) => state.selectedAnnotationIds.has(a.id))
       : undefined;
-
-  // Get syllable suggestion from Cantus Index
-  const suggestion = useSuggestion(
-    state.annotations,
-    selectedAnnotation || null,
-    state.isNewlyCreated
-  );
 
   // Get neume type suggestion from image classification
   const neumeSuggestion = useNeumeSuggestion(
@@ -1019,7 +1011,6 @@ export function AnnotationCanvas() {
             annotation={selectedAnnotation}
             position={popoverPosition}
             isNewlyCreated={state.isNewlyCreated}
-            suggestion={suggestion}
             neumeSuggestion={neumeSuggestion}
             onTypeChange={handleTypeChange}
             onTextChange={handleTextChange}

@@ -9,33 +9,27 @@ import RedoIcon from '@mui/icons-material/Redo';
 import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
-import SearchIcon from '@mui/icons-material/Search';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import { useAppContext } from '../state/context';
-import { undo, redo, setImage, setOcrDialog, setError, setMetadata, loadState, setContributionId } from '../state/actions';
+import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId } from '../state/actions';
 import { exportMEI } from '../utils/meiExport';
 import { exportAnnotationsJSON, AnnotationsFile } from '../utils/jsonExport';
 import { parseAnnotationsJSON } from '../utils/jsonImport';
 import { contributeTrainingData, getContribution, updateContribution, TrainingType } from '../services/htrService';
-import { CantusSelectionDialog } from './CantusSelectionDialog';
 import { ContributionsDialog } from './ContributionsDialog';
 import { CrossSectionDialog } from './CrossSectionDialog';
-import { useCantusLookup } from '../hooks/useCantusLookup';
 import { useTrainingStatus } from '../hooks/useTrainingStatus';
-import { CantusChant } from '../services/cantusIndex';
 
 export function Toolbar() {
   const { state, dispatch, canUndo, canRedo, recognitionMode, setRecognitionMode } = useAppContext();
   const [isContributing, setIsContributing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [selectionDialogChants, setSelectionDialogChants] = useState<CantusChant[]>([]);
   const [pendingImport, setPendingImport] = useState<AnnotationsFile | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const [importAnchorEl, setImportAnchorEl] = useState<null | HTMLElement>(null);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
-  const cantusLookup = useCantusLookup();
   const training = useTrainingStatus();
   const [contributionsDialogOpen, setContributionsDialogOpen] = useState(false);
   const [crossSectionOpen, setCrossSectionOpen] = useState(false);
@@ -96,7 +90,7 @@ export function Toolbar() {
 
   const handleExport = async () => {
     if (state.imageDataUrl) {
-      await exportMEI(state.annotations, state.imageDataUrl, state.metadata);
+      await exportMEI(state.annotations, state.imageDataUrl);
     }
   };
 
@@ -144,9 +138,9 @@ export function Toolbar() {
       isNewlyCreated: false,
       ocrDialogState: { mode: 'closed' },
       errorMessage: null,
-      metadata: data.metadata,
       lineBoundaries: [],
       contributionId: null,
+      metadata: data.metadata,
     }));
   };
 
@@ -163,38 +157,6 @@ export function Toolbar() {
 
   const canExport = state.imageDataUrl !== null;
   const canRecognize = state.imageDataUrl !== null;
-
-  // Can lookup Cantus ID only when there are syllables with text
-  const syllablesWithText = state.annotations.filter(
-    (a) => a.type === 'syllable' && a.text?.trim()
-  );
-  const canLookupCantus = syllablesWithText.length > 0 && cantusLookup.state.status !== 'loading';
-
-  const handleCantusLookup = async () => {
-    const results = await cantusLookup.lookup(state.annotations);
-    if (results.length === 0) {
-      dispatch(setError('No matching chant found'));
-    } else if (results.length === 1) {
-      // Auto-select single result
-      const chant = results[0];
-      dispatch(setMetadata({ cantusId: chant.cid, genre: chant.genre }));
-      setSuccessMessage(`Found: ${chant.cid} (${chant.genre})`);
-    } else {
-      // Multiple results - show selection dialog
-      setSelectionDialogChants(results);
-    }
-  };
-
-  const handleCantusSelect = (chant: CantusChant) => {
-    dispatch(setMetadata({ cantusId: chant.cid, genre: chant.genre }));
-    setSelectionDialogChants([]);
-    setSuccessMessage(`Selected: ${chant.cid} (${chant.genre})`);
-  };
-
-  const handleCantusCancel = () => {
-    setSelectionDialogChants([]);
-    cantusLookup.reset();
-  };
 
   // Can contribute only when there's an image AND both syllables AND neumes
   const hasSyllables = state.annotations.some(a => a.type === 'syllable');
@@ -412,37 +374,6 @@ export function Toolbar() {
         <ToggleButton value="text">Text (t)</ToggleButton>
         <ToggleButton value="manual">Manual (m)</ToggleButton>
       </ToggleButtonGroup>
-      <Tooltip title="Find Cantus ID">
-        <span>
-          <IconButton onClick={handleCantusLookup} disabled={!canLookupCantus} color="inherit">
-            {cantusLookup.state.status === 'loading' ? (
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              <SearchIcon />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
-      {state.metadata?.cantusId ? (
-        <Tooltip title={`Genre: ${state.metadata.genre || 'Unknown'}`}>
-          <Chip
-            label={state.metadata.cantusId}
-            size="small"
-            color="primary"
-            variant="outlined"
-            sx={{ ml: 0.5 }}
-          />
-        </Tooltip>
-      ) : (
-        <Tooltip title="No Cantus ID set">
-          <Chip
-            label="No ID"
-            size="small"
-            variant="outlined"
-            sx={{ ml: 0.5, opacity: 0.5 }}
-          />
-        </Tooltip>
-      )}
 
       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
@@ -487,14 +418,6 @@ export function Toolbar() {
           <Button onClick={handleConfirmImport} variant="contained">Replace</Button>
         </DialogActions>
       </Dialog>
-
-      {/* Cantus selection dialog */}
-      <CantusSelectionDialog
-        open={selectionDialogChants.length > 0}
-        chants={selectionDialogChants}
-        onSelect={handleCantusSelect}
-        onCancel={handleCantusCancel}
-      />
 
       {/* Contributions dialog */}
       <ContributionsDialog

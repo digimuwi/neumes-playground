@@ -183,7 +183,7 @@ export function HelpButton({ open: controlledOpen, onOpenChange }: HelpButtonPro
               <strong>Auto-tightening:</strong> When you draw a bounding box, it automatically shrinks to fit the ink content.
             </Typography>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              <strong>Suggestions:</strong> The editor offers syllable text suggestions from Cantus Index and neume type suggestions based on image classification.
+              <strong>Suggestions:</strong> The editor offers neume type suggestions based on image classification.
             </Typography>
           </Section>
         </DialogContent>

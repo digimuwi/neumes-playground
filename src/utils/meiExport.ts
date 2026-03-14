@@ -1,4 +1,4 @@
-import { Annotation, DocumentMetadata } from '../state/types';
+import { Annotation } from '../state/types';
 import { computeTextLines, TextLine } from '../hooks/useTextLines';
 import { computeNeumeAssignments } from '../hooks/useNeumeAssignment';
 import { polygonBounds, polygonCenterX } from '../utils/polygonUtils';
@@ -198,35 +198,11 @@ ${neumeElements}
 }
 
 /**
- * Generates the workList XML section when Cantus metadata is present.
- */
-function generateWorkList(metadata?: DocumentMetadata): string {
-  if (!metadata?.cantusId) {
-    return '';
-  }
-
-  const genreElement = metadata.genre
-    ? `
-      <classification>
-        <term type="genre">${metadata.genre}</term>
-      </classification>`
-    : '';
-
-  return `
-  <workList>
-    <work>
-      <identifier type="cantus">${metadata.cantusId}</identifier>${genreElement}
-    </work>
-  </workList>`;
-}
-
-/**
  * Generates the complete MEI XML document.
  */
 export function generateMEI(
   annotations: Annotation[],
-  dimensions: ImageDimensions,
-  metadata?: DocumentMetadata
+  dimensions: ImageDimensions
 ): string {
   const textLines = computeTextLines(annotations);
   const assignments = computeNeumeAssignments(annotations, textLines);
@@ -264,7 +240,6 @@ export function generateMEI(
   }
 
   const layerContent = layerElements.join('\n');
-  const workList = generateWorkList(metadata);
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <mei xmlns="http://www.music-encoding.org/ns/mei">
@@ -274,7 +249,7 @@ export function generateMEI(
         <title>Exported from Neumes Playground</title>
       </titleStmt>
       <pubStmt/>
-    </fileDesc>${workList}
+    </fileDesc>
   </meiHead>
   <music>
     <facsimile>
@@ -320,10 +295,9 @@ export function downloadMEI(xmlString: string, filename: string): void {
  */
 export async function exportMEI(
   annotations: Annotation[],
-  imageDataUrl: string,
-  metadata?: DocumentMetadata
+  imageDataUrl: string
 ): Promise<void> {
   const dimensions = await getImageDimensions(imageDataUrl);
-  const xml = generateMEI(annotations, dimensions, metadata);
+  const xml = generateMEI(annotations, dimensions);
   downloadMEI(xml, 'export.mei');
 }

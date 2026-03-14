@@ -17,7 +17,6 @@ interface InlineAnnotationEditorProps {
   annotation: Annotation;
   position: { x: number; y: number };
   isNewlyCreated: boolean;
-  suggestion: string | null;
   neumeSuggestion: string | null;
   onTypeChange: (type: 'syllable' | 'neume') => void;
   onTextChange: (text: string) => void;
@@ -31,7 +30,6 @@ export function InlineAnnotationEditor({
   annotation,
   position,
   isNewlyCreated,
-  suggestion,
   neumeSuggestion,
   onTypeChange,
   onTextChange,
@@ -78,27 +76,11 @@ export function InlineAnnotationEditor({
   };
 
   const handleTextKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Accept suggestion with Tab or Enter when field is empty and suggestion exists
-    if ((e.key === 'Tab' || e.key === 'Enter') && showGhostText && suggestion) {
-      e.preventDefault();
-      onTextChange(suggestion);
-      if (e.key === 'Enter') {
-        onClose();
-      }
-      return;
-    }
-
     if (e.key === 'Enter') {
       e.preventDefault();
       onClose();
     }
   };
-
-  // Show ghost text only for empty syllable fields with a suggestion
-  const showGhostText =
-    annotation.type === 'syllable' &&
-    (!annotation.text || annotation.text.length === 0) &&
-    suggestion;
 
   // For newly created neumes without a type set, return null to show placeholder
   // Otherwise find the matching type info
@@ -207,18 +189,6 @@ export function InlineAnnotationEditor({
           onKeyDown={handleTextKeyDown}
           inputRef={textInputRef}
           autoComplete="off"
-          placeholder={showGhostText ? suggestion ?? undefined : undefined}
-          InputProps={{
-            sx: showGhostText
-              ? {
-                  '& input::placeholder': {
-                    color: 'text.secondary',
-                    opacity: 0.7,
-                  },
-                }
-              : undefined,
-          }}
-          helperText={showGhostText ? 'Tab/Enter to accept' : undefined}
         />
       )}
 
