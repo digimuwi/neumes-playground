@@ -9,11 +9,12 @@ import { useNeumeAssignment } from '../hooks/useNeumeAssignment';
 import { useTextLines, TextLine } from '../hooks/useTextLines';
 import { useNeumeSuggestion } from '../hooks/useNeumeSuggestion';
 import { drawAssignmentCurve } from '../hooks/useCurveDrawing';
-import { Annotation, NeumeType, OcrProgressEvent, Rectangle } from '../state/types';
+import { Annotation, OcrProgressEvent, Rectangle } from '../state/types';
 import { polygonBounds, polygonCenterX, polygonBottomY, polygonMinX, closestPointOnPolygon } from '../utils/polygonUtils';
 import { InlineAnnotationEditor } from './InlineAnnotationEditor';
 import { HelpButton } from './HelpButton';
 import { detectMargins, computeOtsuThreshold, tightenRectangle, tightenToPolygon, OTSU_THRESHOLD_BIAS } from '../utils/imageProcessing';
+import { getActiveNeumeClasses } from '../data/neumeTypes';
 
 const SYLLABLE_COLOR = 'rgba(66, 133, 244, 0.4)';
 const SYLLABLE_BORDER = 'rgba(66, 133, 244, 1)';
@@ -146,7 +147,7 @@ function drawLineNumber(
 }
 
 export function AnnotationCanvas() {
-  const { state, dispatch, recognitionMode, setRecognitionMode } = useAppContext();
+  const { state, dispatch, recognitionMode, setRecognitionMode, neumeClasses } = useAppContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -241,6 +242,7 @@ export function AnnotationCanvas() {
   }, [selectedAnnotation, zoom, panX, panY]);
 
   const popoverPosition = calculatePopoverPosition();
+  const defaultNeumeType = getActiveNeumeClasses(neumeClasses)[0]?.key || neumeClasses[0]?.key;
 
   const handleClose = useCallback(() => {
     dispatch(selectAnnotation(null));
@@ -253,11 +255,11 @@ export function AnnotationCanvas() {
         updateAnnotation(selectedAnnotation.id, {
           type,
           text: type === 'syllable' ? selectedAnnotation.text || '' : undefined,
-          neumeType: type === 'neume' ? selectedAnnotation.neumeType || NeumeType.PUNCTUM : undefined,
+          neumeType: type === 'neume' ? selectedAnnotation.neumeType || defaultNeumeType : undefined,
         })
       );
     },
-    [dispatch, selectedAnnotation]
+    [defaultNeumeType, dispatch, selectedAnnotation]
   );
 
   const handleTextChange = useCallback(
@@ -269,7 +271,7 @@ export function AnnotationCanvas() {
   );
 
   const handleNeumeTypeChange = useCallback(
-    (neumeType: NeumeType) => {
+    (neumeType: string) => {
       if (!selectedAnnotation) return;
       dispatch(updateAnnotation(selectedAnnotation.id, { neumeType }));
     },
@@ -1009,6 +1011,7 @@ export function AnnotationCanvas() {
         <div ref={popoverRef}>
           <InlineAnnotationEditor
             annotation={selectedAnnotation}
+            neumeClasses={neumeClasses}
             position={popoverPosition}
             isNewlyCreated={state.isNewlyCreated}
             neumeSuggestion={neumeSuggestion}

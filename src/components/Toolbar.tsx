@@ -11,6 +11,7 @@ import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import TableChartIcon from '@mui/icons-material/TableChart';
+import LabelIcon from '@mui/icons-material/Label';
 import { useAppContext } from '../state/context';
 import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId } from '../state/actions';
 import { exportMEI } from '../utils/meiExport';
@@ -19,6 +20,7 @@ import { parseAnnotationsJSON } from '../utils/jsonImport';
 import { contributeTrainingData, getContribution, updateContribution, TrainingType } from '../services/htrService';
 import { ContributionsDialog } from './ContributionsDialog';
 import { CrossSectionDialog } from './CrossSectionDialog';
+import { NeumeClassesDialog } from './NeumeClassesDialog';
 import { useTrainingStatus } from '../hooks/useTrainingStatus';
 
 export function Toolbar() {
@@ -33,6 +35,7 @@ export function Toolbar() {
   const training = useTrainingStatus();
   const [contributionsDialogOpen, setContributionsDialogOpen] = useState(false);
   const [crossSectionOpen, setCrossSectionOpen] = useState(false);
+  const [neumeClassesOpen, setNeumeClassesOpen] = useState(false);
   const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
   const [trainingType, setTrainingType] = useState<TrainingType>('both');
   const [trainingEpochs, setTrainingEpochs] = useState('');
@@ -328,6 +331,11 @@ export function Toolbar() {
           <TableChartIcon />
         </IconButton>
       </Tooltip>
+      <Tooltip title="Manage Neume Classes">
+        <IconButton onClick={() => setNeumeClassesOpen(true)} color="inherit">
+          <LabelIcon />
+        </IconButton>
+      </Tooltip>
       <Tooltip title="Start Training">
         <span>
           <IconButton onClick={handleTrainingClick} disabled={training.isActive} color="inherit">
@@ -430,6 +438,11 @@ export function Toolbar() {
       <CrossSectionDialog
         open={crossSectionOpen}
         onClose={() => setCrossSectionOpen(false)}
+      />
+
+      <NeumeClassesDialog
+        open={neumeClassesOpen}
+        onClose={() => setNeumeClassesOpen(false)}
       />
 
       {/* Training configuration dialog */}

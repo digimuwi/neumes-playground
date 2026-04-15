@@ -108,6 +108,32 @@ class NeumeInput(BaseModel):
     bbox: BBox = Field(..., description="Bounding box in pixel coordinates")
 
 
+class NeumeClass(BaseModel):
+    """A neume class entry in the shared registry."""
+
+    id: int = Field(..., ge=0, description="Stable integer class ID")
+    key: str = Field(..., min_length=1, description="Canonical neume type string used in annotations")
+    name: str = Field(..., min_length=1, description="Display label for UI")
+    description: str = Field("", description="Optional UI help text")
+    active: bool = Field(True, description="Whether the class is offered for new labeling")
+
+
+class NeumeClassCreate(BaseModel):
+    """Request to create a new neume class."""
+
+    key: str = Field(..., min_length=1, description="Canonical neume type string used in annotations")
+    name: str = Field(..., min_length=1, description="Display label for UI")
+    description: str = Field("", description="Optional UI help text")
+
+
+class NeumeClassUpdate(BaseModel):
+    """Request to update a neume class."""
+
+    name: Optional[str] = Field(None, min_length=1, description="Updated display label for UI")
+    description: Optional[str] = Field(None, description="Updated UI help text")
+    active: Optional[bool] = Field(None, description="Whether the class is offered for new labeling")
+
+
 class NeumeRelabel(BaseModel):
     """Request to relabel a neume in a contribution."""
 

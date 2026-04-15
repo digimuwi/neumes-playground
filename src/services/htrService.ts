@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Annotation, NeumeType, Rectangle, LineBoundary, OcrProgressEvent } from '../state/types';
+import { Annotation, Rectangle, LineBoundary, OcrProgressEvent } from '../state/types';
 import { computeTextLines } from '../hooks/useTextLines';
 import { normalizePolygon, denormalizePolygon, rectToPolygon, polygonBounds } from '../utils/polygonUtils';
 
@@ -231,7 +231,7 @@ export function responseToAnnotations(data: RecognitionResponse, imageDimensions
       id: uuidv4(),
       type: 'neume' as const,
       polygon: normalizePolygon(bboxPolygon, imageDimensions),
-      neumeType: neume.type as NeumeType,
+      neumeType: neume.type,
     });
   }
 

@@ -1,68 +1,9 @@
-export enum NeumeType {
-  // Basic neumes
-  PUNCTUM = 'punctum',
-  VIRGA = 'virga',
-
-  // Two-note neumes
-  PES = 'pes',
-  CLIVIS = 'clivis',
-
-  // Three-note neumes
-  TORCULUS = 'torculus',
-  PORRECTUS = 'porrectus',
-  SCANDICUS = 'scandicus',
-  CLIMACUS = 'climacus',
-
-  // Compound neumes
-  PES_SUBBIPUNCTIS = 'pes subbipunctis',
-  PES_SUBTRIPUNCTIS = 'pes subtripunctis',
-  PES_PRAEBIPUNCTIS = 'pes praebipunctis',
-  SCANDICUS_FLEXUS = 'scandicus flexus',
-  TORCULUS_RESUPINUS = 'torculus resupinus',
-  PORRECTUS_FLEXUS = 'porrectus flexus',
-  SCANDICUS_CLIMACUS = 'scandicus climacus',
-
-  // Repeated notes
-  BIVIRGA = 'bivirga',
-  TRIVIRGA = 'trivirga',
-  STROPHA = 'stropha',
-  BISTROPHA = 'bistropha',
-  TRISTROPHA = 'tristropha',
-
-  // Special neumes
-  PRESSUS = 'pressus',
-  UNCINUS = 'uncinus',
-  CELERITER = 'celeriter',
-  QUILISMA = 'quilisma',
-  SALICUS = 'salicus',
-  APOSTROPHA = 'apostropha',
-
-  // Episema variants
-  VIRGA_EPISEMA = 'virga episema',
-  CLIVIS_EPISEMA = 'clivis episema',
-  CLIVIS_EPISEMA_PRAEBIPUNCTIS = 'clivis episema praebipunctis',
-  CLIMACUS_EPISEMA = 'climacus episema',
-  APOSTROPHA_EPISEMA = 'apostropha episema',
-
-  // Liquescent and quadratus variants
-  ORISCUS = 'oriscus',
-  TRIGON = 'trigon',
-  PES_LIQUESCENS = 'pes liquescens',
-  TORCULUS_LIQUESCENS = 'torculus liquescens',
-  PES_QUADRATUS = 'pes quadratus',
-  PES_QUADRATUS_SUBBIPUNCTIS = 'pes quadratus subbipunctis',
-  TENETE = 'tenete',
-  PORRECTUS_SUBBIPUNCTIS = 'porrectus subbipunctis',
-  EXPECTATE = 'expectate',
-
-  // Additional neume types
-  CEPHALICUS = 'cephalicus',
-  EQUALITER = 'equaliter',
-  INFERIUS = 'inferius',
-  LEVARE = 'levare',
-  MEDIOCRITER = 'mediocriter',
-  PRESSIONEM = 'pressionem',
-  SURSUM = 'sursum',
+export interface NeumeClass {
+  id: number;
+  key: string;
+  name: string;
+  description: string;
+  active: boolean;
 }
 
 export type RecognitionMode = 'manual' | 'neume' | 'text';
@@ -79,7 +20,7 @@ export interface Annotation {
   type: 'syllable' | 'neume';
   polygon: number[][];
   text?: string;
-  neumeType?: NeumeType;
+  neumeType?: string;
 }
 
 export type OcrStage = 'loading' | 'segmenting' | 'recognizing' | 'syllabifying' | 'detecting';

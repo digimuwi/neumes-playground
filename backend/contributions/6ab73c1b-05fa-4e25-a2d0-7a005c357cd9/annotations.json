@@ -10459,7 +10459,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2003,
         "y": 1041,
@@ -10486,7 +10486,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes quadratus",
       "bbox": {
         "x": 2120,
         "y": 1046,

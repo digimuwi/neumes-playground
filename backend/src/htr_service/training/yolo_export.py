@@ -18,6 +18,11 @@ from pathlib import Path
 import yaml
 from PIL import Image
 
+from ..neume_registry import (
+    DEFAULT_CLASSES_PATH,
+    load_neume_class_map,
+    load_neume_registry,
+)
 from ..contribution.storage import CONTRIBUTIONS_DIR, list_contributions
 from ..pipeline.text_masking import mask_polygon_regions
 from ..pipeline.tiling import TILE_SIZE_DEFAULT, TILE_SIZE_MAX, TILE_SIZE_MIN, TILE_SIZE_MULTIPLIER, generate_tile_grid
@@ -26,7 +31,6 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).parent.parent.parent.parent
 DEFAULT_OUTPUT_DIR = BASE_DIR / "datasets" / "neumes"
-DEFAULT_CLASSES_PATH = BASE_DIR / "neume_classes.yaml"
 
 
 def load_neume_classes(path: Path = DEFAULT_CLASSES_PATH) -> dict[str, int]:
@@ -42,23 +46,7 @@ def load_neume_classes(path: Path = DEFAULT_CLASSES_PATH) -> dict[str, int]:
         FileNotFoundError: If the YAML file does not exist.
         ValueError: If the YAML file has invalid structure.
     """
-    if not path.is_file():
-        raise FileNotFoundError(
-            f"Neume class mapping file not found: {path}\n"
-            "Create neume_classes.yaml with a 'classes' list."
-        )
-
-    with open(path, encoding="utf-8") as f:
-        data = yaml.safe_load(f)
-
-    if not isinstance(data, dict) or "classes" not in data:
-        raise ValueError(f"Invalid neume_classes.yaml: expected 'classes' key, got {list(data.keys()) if isinstance(data, dict) else type(data)}")
-
-    classes = data["classes"]
-    if not isinstance(classes, list):
-        raise ValueError(f"Invalid neume_classes.yaml: 'classes' must be a list, got {type(classes)}")
-
-    return {name: idx for idx, name in enumerate(classes)}
+    return load_neume_class_map(path)
 
 
 def bbox_to_yolo(x: int, y: int, width: int, height: int, img_w: int, img_h: int) -> tuple[float, float, float, float]:
@@ -263,10 +251,13 @@ def _export_single_contribution(
 def _generate_dataset_yaml(
     output_dir: Path,
     class_map: dict[str, int],
+    classes_path: Path = DEFAULT_CLASSES_PATH,
 ) -> None:
     """Generate dataset.yaml for YOLOv8 training."""
-    # Invert class_map to id -> name
-    names = {idx: name for name, idx in class_map.items()}
+    names = {
+        neume_class.id: neume_class.key
+        for neume_class in load_neume_registry(classes_path)
+    }
 
     dataset_config = {
         "path": str(output_dir.resolve()),
@@ -361,7 +352,7 @@ def export_dataset(
             skipped += 1
 
     # Generate dataset.yaml
-    _generate_dataset_yaml(output_dir, class_map)
+    _generate_dataset_yaml(output_dir, class_map, classes_path)
 
     return {
         "exported": exported,

@@ -18,6 +18,9 @@ from .models.types import (
     ContributionSummary,
     ImageMetadata,
     Line,
+    NeumeClass,
+    NeumeClassCreate,
+    NeumeClassUpdate,
     NeumeCrop,
     NeumeDetection,
     NeumeRelabel,
@@ -31,6 +34,7 @@ from .models.types import (
 from .contribution import find_image_file, get_contribution, relabel_neume, save_contribution, update_contribution_annotations
 from .contribution.storage import list_contributions
 from .cors import build_cors_options
+from .neume_registry import create_neume_class, load_neume_registry, update_neume_class
 from .pipeline.geometry import extract_char_bboxes
 from .pipeline.neume_detection import detect_neumes, detect_neumes_direct
 from .pipeline.polygon_slicing import slice_line_polygon, syllable_x_ranges
@@ -372,6 +376,32 @@ async def recognize(
 async def health():
     """Health check endpoint."""
     return {"status": "ok"}
+
+
+@app.get("/neume-classes", response_model=list[NeumeClass])
+async def list_neume_classes():
+    """Return the shared neume class registry."""
+    return load_neume_registry()
+
+
+@app.post("/neume-classes", status_code=201, response_model=NeumeClass)
+async def create_neume_class_endpoint(body: NeumeClassCreate):
+    """Create a new neume class with a stable appended ID."""
+    try:
+        return create_neume_class(body)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@app.patch("/neume-classes/{class_id}", response_model=NeumeClass)
+async def update_neume_class_endpoint(class_id: int, body: NeumeClassUpdate):
+    """Update mutable neume class fields."""
+    try:
+        return update_neume_class(class_id, body)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Neume class not found")
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 class AnnotationsParseError(Exception):

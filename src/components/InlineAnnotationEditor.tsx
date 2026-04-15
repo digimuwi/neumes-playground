@@ -10,17 +10,18 @@ import {
   Box,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Annotation, NeumeType } from '../state/types';
-import { neumeTypes, NeumeTypeInfo } from '../data/neumeTypes';
+import { Annotation, NeumeClass } from '../state/types';
+import { findNeumeClassByKey, findNeumeClassBySuggestion, getActiveNeumeClasses } from '../data/neumeTypes';
 
 interface InlineAnnotationEditorProps {
   annotation: Annotation;
+  neumeClasses: NeumeClass[];
   position: { x: number; y: number };
   isNewlyCreated: boolean;
   neumeSuggestion: string | null;
   onTypeChange: (type: 'syllable' | 'neume') => void;
   onTextChange: (text: string) => void;
-  onNeumeTypeChange: (neumeType: NeumeType) => void;
+  onNeumeTypeChange: (neumeType: string) => void;
   onClose: () => void;
   onClearNewFlag: () => void;
   onDelete: () => void;
@@ -28,6 +29,7 @@ interface InlineAnnotationEditorProps {
 
 export function InlineAnnotationEditor({
   annotation,
+  neumeClasses,
   position,
   isNewlyCreated,
   neumeSuggestion,
@@ -82,41 +84,41 @@ export function InlineAnnotationEditor({
     }
   };
 
-  // For newly created neumes without a type set, return null to show placeholder
-  // Otherwise find the matching type info
-  const currentNeumeTypeInfo = annotation.neumeType
-    ? neumeTypes.find((n) => n.type === annotation.neumeType) || null
-    : null;
+  const activeNeumeClasses = getActiveNeumeClasses(neumeClasses);
+
+  // Show the current class even if it is inactive so existing annotations remain editable.
+  const currentNeumeClass = findNeumeClassByKey(neumeClasses, annotation.neumeType);
+  const autocompleteOptions = currentNeumeClass && !currentNeumeClass.active
+    ? [currentNeumeClass, ...activeNeumeClasses.filter((entry) => entry.id !== currentNeumeClass.id)]
+    : activeNeumeClasses;
 
   const handleNeumeAutocompleteChange = (
     _event: React.SyntheticEvent,
-    value: NeumeTypeInfo | null
+    value: NeumeClass | null
   ) => {
     if (value) {
-      onNeumeTypeChange(value.type);
+      onNeumeTypeChange(value.key);
       onClose();
     }
   };
 
   const filterNeumeOptions = (
-    options: NeumeTypeInfo[],
+    options: NeumeClass[],
     { inputValue }: { inputValue: string }
   ) =>
     options.filter((opt) =>
       opt.name.toLowerCase().startsWith(inputValue.toLowerCase())
+      || opt.key.toLowerCase().startsWith(inputValue.toLowerCase())
     );
 
-  // Find the suggested neume type info
-  const suggestedNeumeTypeInfo = neumeSuggestion
-    ? neumeTypes.find((n) => n.name.toLowerCase() === neumeSuggestion.toLowerCase())
-    : null;
+  const suggestedNeumeClass = findNeumeClassBySuggestion(activeNeumeClasses, neumeSuggestion);
 
   // Show neume ghost text when no neume type selected yet and suggestion exists
   const showNeumeGhostText =
     annotation.type === 'neume' &&
     !annotation.neumeType &&
     neumeSuggestion &&
-    suggestedNeumeTypeInfo;
+    suggestedNeumeClass;
 
   // Track if user has typed in neume autocomplete
   const [neumeInputValue, setNeumeInputValue] = React.useState('');
@@ -133,11 +135,11 @@ export function InlineAnnotationEditor({
     if (
       (e.key === 'Tab' || e.key === 'Enter') &&
       !annotation.neumeType &&
-      suggestedNeumeTypeInfo &&
+      suggestedNeumeClass &&
       neumeInputValue === ''
     ) {
       e.preventDefault();
-      onNeumeTypeChange(suggestedNeumeTypeInfo.type);
+      onNeumeTypeChange(suggestedNeumeClass.key);
       onClose();
     }
   };
@@ -195,8 +197,8 @@ export function InlineAnnotationEditor({
       {annotation.type === 'neume' && (
         <Autocomplete
           size="small"
-          options={neumeTypes}
-          value={currentNeumeTypeInfo}
+          options={autocompleteOptions}
+          value={currentNeumeClass}
           getOptionLabel={(option) => option.name}
           filterOptions={filterNeumeOptions}
           openOnFocus
@@ -223,6 +225,25 @@ export function InlineAnnotationEditor({
               }}
               helperText={showNeumeGhostText ? 'Tab/Enter to accept' : undefined}
             />
+          )}
+          renderOption={(props, option) => (
+            <li {...props} key={option.id}>
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <span>{option.name}</span>
+                  {!option.active && (
+                    <Box component="span" sx={{ color: 'text.secondary', fontSize: 12 }}>
+                      inactive
+                    </Box>
+                  )}
+                </Box>
+                {option.description && (
+                  <Box component="span" sx={{ display: 'block', color: 'text.secondary', fontSize: 12 }}>
+                    {option.description}
+                  </Box>
+                )}
+              </Box>
+            </li>
           )}
         />
       )}
