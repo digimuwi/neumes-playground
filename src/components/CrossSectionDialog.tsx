@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import {
   Autocomplete,
   Box,
@@ -10,12 +10,13 @@ import {
   MenuItem,
   Popover,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import { listNeumes, relabelNeume, NeumeCrop } from '../services/htrService';
-import { neumeTypes, NeumeTypeInfo } from '../data/neumeTypes';
+import { findNeumeClassByKey, getActiveNeumeClasses } from '../data/neumeTypes';
 import { computeOtsuThreshold, binarizeRegion } from '../utils/imageProcessing';
+import { NeumeClass } from '../state/types';
+import { useAppContext } from '../state/context';
 
 interface CrossSectionDialogProps {
   open: boolean;
@@ -81,17 +82,22 @@ function neumeKey(crop: NeumeCrop): string {
   return `${crop.contribution_id}:${crop.bbox.x},${crop.bbox.y},${crop.bbox.width},${crop.bbox.height}`;
 }
 
-const CROP_HEIGHT = 48;
+/** Target display height for the median-height neume; others scale proportionally. */
+const TARGET_MEDIAN_HEIGHT = 44;
+/** How much the crop grows on hover. */
+const HOVER_SCALE = 1.5;
 
 const filterNeumeOptions = (
-  options: NeumeTypeInfo[],
+  options: NeumeClass[],
   { inputValue }: { inputValue: string },
 ) =>
   options.filter((opt) =>
-    opt.name.toLowerCase().startsWith(inputValue.toLowerCase()),
+    opt.name.toLowerCase().startsWith(inputValue.toLowerCase())
+    || opt.key.toLowerCase().startsWith(inputValue.toLowerCase()),
   );
 
 export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
+  const { neumeClasses } = useAppContext();
   const [binarizedNeumes, setBinarizedNeumes] = useState<BinarizedNeume[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +116,7 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
 
   // Set of neume keys recently moved (for entrance animation)
   const [animatingKeys, setAnimatingKeys] = useState<Set<string>>(new Set());
+
 
   const loadNeumes = useCallback(async () => {
     setLoading(true);
@@ -188,13 +195,13 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
 
   const handleRelabelSelect = async (
     _event: React.SyntheticEvent,
-    value: NeumeTypeInfo | null,
+    value: NeumeClass | null,
   ) => {
     if (!value || !relabelTarget) return;
 
     const target = relabelTarget;
     const key = target.key;
-    const newType = value.type;
+    const newType = value.key;
     closeRelabel();
 
     // Show spinner
@@ -232,6 +239,22 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
     }
   };
 
+  const activeNeumeClasses = getActiveNeumeClasses(neumeClasses);
+
+  // Global scale factor: maps original bbox pixels -> display pixels.
+  // Pick it so the median bbox height lands at TARGET_MEDIAN_HEIGHT — this
+  // preserves *relative* sizes between neumes while keeping the typical one
+  // readable.
+  const displayScale = useMemo(() => {
+    if (binarizedNeumes.length === 0) return 1;
+    const heights = binarizedNeumes
+      .map((bn) => bn.crop.bbox.height)
+      .sort((a, b) => a - b);
+    const median = heights[Math.floor(heights.length / 2)];
+    if (!median) return 1;
+    return TARGET_MEDIAN_HEIGHT / median;
+  }, [binarizedNeumes]);
+
   // Group binarized neumes by type
   const neumesByType = new Map<string, BinarizedNeume[]>();
   for (const bn of binarizedNeumes) {
@@ -239,6 +262,19 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
     list.push(bn);
     neumesByType.set(bn.crop.type, list);
   }
+
+  const extraTypes = Array.from(neumesByType.keys())
+    .filter((type) => !findNeumeClassByKey(neumeClasses, type))
+    .sort((a, b) => a.localeCompare(b))
+    .map((type, index) => ({
+      id: -(index + 1),
+      key: type,
+      name: type,
+      description: 'Unknown or legacy type not present in the shared registry',
+      active: false,
+    }));
+
+  const tableClasses = [...neumeClasses, ...extraTypes];
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -257,12 +293,12 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
         {!loading && !error && (
           <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
             <tbody>
-              {neumeTypes.map((info) => {
-                const instances = neumesByType.get(info.type) || [];
+              {tableClasses.map((info) => {
+                const instances = neumesByType.get(info.key) || [];
                 return (
                   <Box
                     component="tr"
-                    key={info.type}
+                    key={info.key}
                     sx={{
                       borderBottom: '1px solid',
                       borderColor: 'divider',
@@ -295,66 +331,91 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
                     <Box
                       component="td"
                       sx={{
-                        py: 1,
-                        verticalAlign: 'middle',
+                        py: 2,
+                        verticalAlign: 'bottom',
                         overflowX: 'auto',
                       }}
                     >
-                      <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                      <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'flex-end' }}>
                         {instances.map((bn) => {
                           const isRelabeling = relabelingKeys.has(bn.key);
                           const isAnimating = animatingKeys.has(bn.key);
 
+                          const displayWidth = Math.max(6, bn.crop.bbox.width * displayScale);
+                          const displayHeight = Math.max(6, bn.crop.bbox.height * displayScale);
+
                           return (
-                            <Tooltip
+                            <Box
                               key={bn.key}
                               title={`${info.name} — ${bn.crop.contribution_id.slice(0, 8)}`}
+                              onClick={(e) => handleCropClick(e, bn)}
+                              onContextMenu={(e) => handleCropClick(e, bn)}
+                              sx={{
+                                position: 'relative',
+                                width: displayWidth,
+                                height: displayHeight,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                borderRadius: 0.5,
+                                flexShrink: 0,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'visible',
+                                transformOrigin: 'center bottom',
+                                transition: 'transform 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out',
+                                '& .cs-img': {
+                                  position: 'absolute',
+                                  inset: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  display: 'block',
+                                  objectFit: 'fill',
+                                  transition: 'opacity 120ms ease-out',
+                                },
+                                '& .cs-img-color': { opacity: 0 },
+                                '&:hover': {
+                                  transform: `scale(${HOVER_SCALE})`,
+                                  borderColor: 'primary.main',
+                                  boxShadow: 3,
+                                  zIndex: 2,
+                                },
+                                '&:hover .cs-img-bw': { opacity: 0 },
+                                '&:hover .cs-img-color': { opacity: 1 },
+                                ...(isAnimating && {
+                                  animation: 'crossSectionFadeIn 0.5s ease-out',
+                                  '@keyframes crossSectionFadeIn': {
+                                    '0%': { opacity: 0, transform: 'scale(0.7)', bgcolor: 'primary.light' },
+                                    '50%': { opacity: 1, transform: 'scale(1.1)' },
+                                    '100%': { opacity: 1, transform: 'scale(1)' },
+                                  },
+                                }),
+                              }}
                             >
-                              <Box
-                                onClick={(e) => handleCropClick(e, bn)}
-                                onContextMenu={(e) => handleCropClick(e, bn)}
-                                sx={{
-                                  height: CROP_HEIGHT,
-                                  border: '1px solid',
-                                  borderColor: 'divider',
-                                  borderRadius: 0.5,
-                                  flexShrink: 0,
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  '&:hover': { borderColor: 'primary.main' },
-                                  ...(isAnimating && {
-                                    animation: 'crossSectionFadeIn 0.5s ease-out',
-                                    '@keyframes crossSectionFadeIn': {
-                                      '0%': {
-                                        opacity: 0,
-                                        transform: 'scale(0.7)',
-                                        bgcolor: 'primary.light',
-                                      },
-                                      '50%': {
-                                        opacity: 1,
-                                        transform: 'scale(1.1)',
-                                      },
-                                      '100%': {
-                                        opacity: 1,
-                                        transform: 'scale(1)',
-                                      },
-                                    },
-                                  }),
-                                }}
-                              >
-                                {isRelabeling ? (
-                                  <CircularProgress size={20} sx={{ mx: 1 }} />
-                                ) : (
-                                  <Box
-                                    component="img"
+                              {isRelabeling ? (
+                                <CircularProgress size={20} sx={{ mx: 1 }} />
+                              ) : (
+                                <>
+                                  <img
+                                    className="cs-img cs-img-bw"
                                     src={bn.binarizedDataUrl}
-                                    sx={{ height: '100%', display: 'block' }}
+                                    loading="lazy"
+                                    decoding="async"
+                                    draggable={false}
+                                    alt=""
                                   />
-                                )}
-                              </Box>
-                            </Tooltip>
+                                  <img
+                                    className="cs-img cs-img-color"
+                                    src={bn.crop.crop_data_url}
+                                    loading="lazy"
+                                    decoding="async"
+                                    draggable={false}
+                                    alt=""
+                                  />
+                                </>
+                              )}
+                            </Box>
                           );
                         })}
                       </Box>
@@ -385,9 +446,9 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
         slotProps={{ paper: { sx: { p: 1, width: 280 } } }}
       >
-        <Autocomplete
-          size="small"
-          options={neumeTypes}
+          <Autocomplete
+            size="small"
+          options={activeNeumeClasses}
           getOptionLabel={(option) => option.name}
           filterOptions={filterNeumeOptions}
           openOnFocus
@@ -403,7 +464,7 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
             />
           )}
           renderOption={(props, option) => (
-            <li {...props} key={option.type}>
+            <li {...props} key={option.id}>
               <Box>
                 <Typography variant="body2">{option.name}</Typography>
                 <Typography variant="caption" color="text.secondary">
