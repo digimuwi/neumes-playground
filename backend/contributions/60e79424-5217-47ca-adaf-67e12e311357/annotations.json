@@ -7573,15 +7573,6 @@
       }
     },
     {
-      "type": "punctum",
-      "bbox": {
-        "x": 1808,
-        "y": 2748,
-        "width": 60,
-        "height": 52
-      }
-    },
-    {
       "type": "unknown",
       "bbox": {
         "x": 1894,
@@ -8335,6 +8326,15 @@
         "y": 2198,
         "width": 40,
         "height": 37
+      }
+    },
+    {
+      "type": "bivirga episamata",
+      "bbox": {
+        "x": 1803,
+        "y": 2748,
+        "width": 65,
+        "height": 52
       }
     }
   ]
