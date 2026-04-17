@@ -577,6 +577,87 @@
         "width": 63,
         "height": 46
       }
+    },
+    {
+      "type": "punctum",
+      "bbox": {
+        "x": 3587,
+        "y": 3108,
+        "width": 27,
+        "height": 16
+      }
+    },
+    {
+      "type": "virga episema",
+      "bbox": {
+        "x": 3951,
+        "y": 3044,
+        "width": 52,
+        "height": 50
+      }
+    },
+    {
+      "type": "punctum",
+      "bbox": {
+        "x": 3732,
+        "y": 3103,
+        "width": 25,
+        "height": 18
+      }
+    },
+    {
+      "type": "porrectus",
+      "bbox": {
+        "x": 4280,
+        "y": 3054,
+        "width": 87,
+        "height": 51
+      }
+    },
+    {
+      "type": "virga",
+      "bbox": {
+        "x": 4168,
+        "y": 3061,
+        "width": 52,
+        "height": 43
+      }
+    },
+    {
+      "type": "virga episema",
+      "bbox": {
+        "x": 3378,
+        "y": 3064,
+        "width": 55,
+        "height": 50
+      }
+    },
+    {
+      "type": "clivis",
+      "bbox": {
+        "x": 3500,
+        "y": 3076,
+        "width": 46,
+        "height": 53
+      }
+    },
+    {
+      "type": "pes",
+      "bbox": {
+        "x": 3830,
+        "y": 3062,
+        "width": 59,
+        "height": 57
+      }
+    },
+    {
+      "type": "tractulus",
+      "bbox": {
+        "x": 4387,
+        "y": 3089,
+        "width": 31,
+        "height": 19
+      }
     }
   ]
 }
