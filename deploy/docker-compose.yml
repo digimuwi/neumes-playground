@@ -1,0 +1,31 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # Persistent data — clone the repo here so git-backed storage works
+      - repo-data:/app/repo
+    environment:
+      # Override DATA_REPO_ROOT to the mounted repo clone
+      - DATA_REPO_ROOT=/app/repo
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  repo-data:
+  caddy-data:
+  caddy-config:

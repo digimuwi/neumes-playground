@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Annotation, Rectangle, LineBoundary, OcrProgressEvent } from '../state/types';
 import { computeTextLines } from '../hooks/useTextLines';
 import { normalizePolygon, denormalizePolygon, rectToPolygon, polygonBounds } from '../utils/polygonUtils';
+import { apiFetch } from './apiFetch';
 
 const HTR_BASE_URL = import.meta.env.VITE_HTR_BASE_URL
   || (import.meta.env.DEV ? '/api' : `${window.location.protocol}//${window.location.hostname}:8000`);
@@ -149,7 +150,7 @@ export async function recognizeRegion(
     formData.append('type', type);
   }
 
-  const response = await fetch(`${HTR_BASE_URL}/recognize`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/recognize`, {
     method: 'POST',
     body: formData,
   });
@@ -175,7 +176,7 @@ export async function recognizePage(
   const formData = new FormData();
   formData.append('image', imageBlob, 'image.jpg');
 
-  const response = await fetch(`${HTR_BASE_URL}/recognize`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/recognize`, {
     method: 'POST',
     body: formData,
   });
@@ -377,7 +378,7 @@ export async function contributeTrainingData(
   formData.append('annotations', JSON.stringify(contributionAnnotations));
 
   // Send request
-  const response = await fetch(`${HTR_BASE_URL}/contribute`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/contribute`, {
     method: 'POST',
     body: formData,
   });
@@ -394,70 +395,6 @@ export async function contributeTrainingData(
       // Use default error message
     }
     throw new Error(errorMessage);
-  }
-
-  return response.json();
-}
-
-// --- Training types ---
-
-type TrainingState = 'idle' | 'exporting' | 'training' | 'deploying' | 'complete' | 'failed';
-type TrainingMode = 'fresh' | 'incremental';
-
-export interface TrainingStatus {
-  state: TrainingState;
-  mode: TrainingMode | null;
-  current_epoch: number | null;
-  total_epochs: number | null;
-  metrics: Record<string, unknown> | null;
-  model_version: string | null;
-  error: string | null;
-  started_at: string | null;
-  completed_at: string | null;
-}
-
-export type TrainingType = 'neumes' | 'segmentation' | 'both';
-
-export interface TrainingStartOptions {
-  epochs?: number;
-  imgsz?: number;
-  seg_epochs?: number;
-  from_scratch?: boolean;
-  training_type?: TrainingType;
-}
-
-/**
- * Start a training run with the given parameters.
- * Returns the initial training status on success.
- * Throws with status 409 if training is already running.
- */
-export async function startTraining(options?: TrainingStartOptions): Promise<TrainingStatus> {
-  const response = await fetch(`${HTR_BASE_URL}/training/start`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(options ?? {}),
-  });
-
-  if (!response.ok) {
-    if (response.status === 409) {
-      const err = new Error('Training already in progress');
-      (err as any).status = 409;
-      throw err;
-    }
-    throw new Error(`Training start failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-/**
- * Get the current YOLO training status.
- */
-export async function getTrainingStatus(): Promise<TrainingStatus> {
-  const response = await fetch(`${HTR_BASE_URL}/training/status`);
-
-  if (!response.ok) {
-    throw new Error(`Training status failed: ${response.status} ${response.statusText}`);
   }
 
   return response.json();
@@ -484,13 +421,15 @@ export interface ContributionData {
   imageDataUrl: string;
   annotations: Annotation[];
   lineBoundaries: LineBoundary[];
+  imageWidth: number;
+  imageHeight: number;
 }
 
 /**
  * Fetch the list of stored contributions from the backend.
  */
 export async function listContributions(): Promise<ContributionSummary[]> {
-  const response = await fetch(`${HTR_BASE_URL}/contributions`);
+  const response = await apiFetch(`${HTR_BASE_URL}/contributions`);
 
   if (!response.ok) {
     throw new Error(`Failed to list contributions: ${response.status} ${response.statusText}`);
@@ -503,7 +442,7 @@ export async function listContributions(): Promise<ContributionSummary[]> {
  * Fetch a single contribution by ID and convert to frontend format.
  */
 export async function getContribution(id: string): Promise<ContributionData> {
-  const response = await fetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`);
+  const response = await apiFetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`);
 
   if (!response.ok) {
     throw new Error(`Failed to get contribution: ${response.status} ${response.statusText}`);
@@ -520,6 +459,8 @@ export async function getContribution(id: string): Promise<ContributionData> {
     imageDataUrl: detail.image.data_url,
     annotations,
     lineBoundaries,
+    imageWidth: detail.image.width,
+    imageHeight: detail.image.height,
   };
 }
 
@@ -535,7 +476,7 @@ export interface NeumeCrop {
  */
 export async function listNeumes(type?: string): Promise<NeumeCrop[]> {
   const params = type ? `?type=${encodeURIComponent(type)}` : '';
-  const response = await fetch(`${HTR_BASE_URL}/neumes${params}`);
+  const response = await apiFetch(`${HTR_BASE_URL}/neumes${params}`);
 
   if (!response.ok) {
     throw new Error(`Failed to list neumes: ${response.status} ${response.statusText}`);
@@ -552,7 +493,7 @@ export async function relabelNeume(
   bbox: { x: number; y: number; width: number; height: number },
   newType: string,
 ): Promise<void> {
-  const response = await fetch(
+  const response = await apiFetch(
     `${HTR_BASE_URL}/contributions/${encodeURIComponent(contributionId)}/neumes`,
     {
       method: 'PATCH',
@@ -586,7 +527,7 @@ export async function updateContribution(
   const { dimensions } = await imageDataUrlToBlob(imageDataUrl);
   const contributionAnnotations = transformAnnotationsForContribution(annotations, dimensions, lineBoundaries);
 
-  const response = await fetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(contributionAnnotations),

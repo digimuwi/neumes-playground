@@ -215,35 +215,3 @@ class ContributionDetail(BaseModel):
     neumes: list[NeumeInput] = Field(default_factory=list, description="Neume annotations")
 
 
-# --- Training models ---
-
-TrainingState = Literal["idle", "exporting", "training", "deploying", "complete", "failed"]
-
-
-TrainingMode = Literal["fresh", "incremental"]
-TrainingType = Literal["neumes", "segmentation", "both"]
-
-
-class TrainingStatus(BaseModel):
-    """Current state of the YOLO training pipeline."""
-
-    state: TrainingState = Field("idle", description="Current training state")
-    mode: Optional[TrainingMode] = Field(None, description="Training mode: fresh (from yolov8n.pt) or incremental (from existing model)")
-    current_epoch: Optional[int] = Field(None, description="Current epoch number (1-indexed)")
-    total_epochs: Optional[int] = Field(None, description="Total number of epochs")
-    metrics: Optional[dict] = Field(None, description="Latest training metrics (mAP, loss, etc.)")
-    model_version: Optional[str] = Field(None, description="Timestamp of deployed model (YYYYMMDD_HHMMSS)")
-    error: Optional[str] = Field(None, description="Error message when state is 'failed'")
-    started_at: Optional[str] = Field(None, description="ISO timestamp when training started")
-    completed_at: Optional[str] = Field(None, description="ISO timestamp when training finished")
-
-
-class TrainingStartRequest(BaseModel):
-    """Optional parameters for starting a training run."""
-
-    epochs: Optional[int] = Field(None, ge=1, description="Number of YOLO training epochs (default: 100 fresh, 30 incremental)")
-    imgsz: int = Field(640, ge=32, description="Training image size in pixels")
-    from_scratch: bool = Field(False, description="Force training from yolov8n.pt instead of resuming from existing model")
-    seg_epochs: int = Field(50, ge=1, description="Number of segmentation training epochs")
-    parallel: bool = Field(False, description="Run YOLO and segmentation training concurrently instead of sequentially")
-    training_type: TrainingType = Field("both", description="Which pipeline(s) to run: 'neumes', 'segmentation', or 'both'")

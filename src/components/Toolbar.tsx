@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Accordion, AccordionDetails, AccordionSummary, Alert, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControlLabel, IconButton, Menu, MenuItem, Snackbar, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Alert, Avatar, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, IconButton, Menu, MenuItem, Snackbar, ToggleButton, ToggleButtonGroup, Tooltip } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -8,23 +7,25 @@ import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import DocumentScannerIcon from '@mui/icons-material/DocumentScanner';
 import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
-import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import LabelIcon from '@mui/icons-material/Label';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useAppContext } from '../state/context';
-import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId } from '../state/actions';
-import { exportMEI } from '../utils/meiExport';
+import { useAuth } from '../state/auth';
+import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId, selectAnnotation } from '../state/actions';
+import { exportMEI, getImageDimensions } from '../utils/meiExport';
 import { exportAnnotationsJSON, AnnotationsFile } from '../utils/jsonExport';
 import { parseAnnotationsJSON } from '../utils/jsonImport';
-import { contributeTrainingData, getContribution, updateContribution, TrainingType } from '../services/htrService';
+import { contributeTrainingData, getContribution, updateContribution, NeumeCrop } from '../services/htrService';
+import { findNeumeAnnotation } from '../utils/findNeumeAnnotation';
 import { ContributionsDialog } from './ContributionsDialog';
 import { CrossSectionDialog } from './CrossSectionDialog';
 import { NeumeClassesDialog } from './NeumeClassesDialog';
-import { useTrainingStatus } from '../hooks/useTrainingStatus';
 
 export function Toolbar() {
-  const { state, dispatch, canUndo, canRedo, recognitionMode, setRecognitionMode } = useAppContext();
+  const { state, dispatch, canUndo, canRedo, recognitionMode, setRecognitionMode, requestFocus } = useAppContext();
+  const auth = useAuth();
   const [isContributing, setIsContributing] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [pendingImport, setPendingImport] = useState<AnnotationsFile | null>(null);
@@ -32,56 +33,9 @@ export function Toolbar() {
   const jsonInputRef = useRef<HTMLInputElement>(null);
   const [importAnchorEl, setImportAnchorEl] = useState<null | HTMLElement>(null);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
-  const training = useTrainingStatus();
   const [contributionsDialogOpen, setContributionsDialogOpen] = useState(false);
   const [crossSectionOpen, setCrossSectionOpen] = useState(false);
   const [neumeClassesOpen, setNeumeClassesOpen] = useState(false);
-  const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
-  const [trainingType, setTrainingType] = useState<TrainingType>('both');
-  const [trainingEpochs, setTrainingEpochs] = useState('');
-  const [trainingImgsz, setTrainingImgsz] = useState(640);
-  const [trainingSegEpochs, setTrainingSegEpochs] = useState(50);
-  const [trainingFromScratch, setTrainingFromScratch] = useState(false);
-  const prevTrainingState = useRef(training.status?.state);
-
-  // React to training state transitions for snackbar feedback
-  useEffect(() => {
-    const prev = prevTrainingState.current;
-    const curr = training.status?.state;
-    prevTrainingState.current = curr;
-
-    if (prev && prev !== curr) {
-      if (curr === 'complete') {
-        setSuccessMessage('Training complete!');
-      } else if (curr === 'failed') {
-        dispatch(setError(training.status?.error || 'Training failed'));
-      }
-    }
-  }, [training.status?.state]);
-
-  const handleTrainingClick = () => {
-    setTrainingDialogOpen(true);
-  };
-
-  const handleTrainingStart = async () => {
-    setTrainingDialogOpen(false);
-    try {
-      const options: Record<string, unknown> = {};
-      if (trainingType !== 'both') options.training_type = trainingType;
-      const parsedEpochs = parseInt(trainingEpochs);
-      if (!isNaN(parsedEpochs) && parsedEpochs >= 1) options.epochs = parsedEpochs;
-      if (trainingImgsz !== 640) options.imgsz = trainingImgsz;
-      if (trainingSegEpochs !== 50) options.seg_epochs = trainingSegEpochs;
-      if (trainingFromScratch) options.from_scratch = true;
-      await training.start(Object.keys(options).length > 0 ? options : undefined);
-    } catch (error) {
-      dispatch(setError(error instanceof Error ? error.message : 'Failed to start training'));
-    }
-  };
-
-  const handleTrainingDialogClose = () => {
-    setTrainingDialogOpen(false);
-  };
 
   const handleUndo = () => {
     dispatch(undo());
@@ -206,6 +160,37 @@ export function Toolbar() {
       dispatch(setError(error instanceof Error ? error.message : 'Failed to load contribution'));
     } finally {
       setIsContributing(false);
+    }
+  };
+
+  const handleNavigateToNeume = async (crop: NeumeCrop) => {
+    setCrossSectionOpen(false);
+    try {
+      if (state.contributionId === crop.contribution_id && state.imageDataUrl) {
+        const dims = await getImageDimensions(state.imageDataUrl);
+        const match = findNeumeAnnotation(state.annotations, crop.type, crop.bbox, dims.width, dims.height);
+        if (match) {
+          dispatch(selectAnnotation(match.id));
+          requestFocus(match.id);
+        }
+        return;
+      }
+
+      const data = await getContribution(crop.contribution_id);
+      const match = findNeumeAnnotation(data.annotations, crop.type, crop.bbox, data.imageWidth, data.imageHeight);
+      dispatch(loadState({
+        imageDataUrl: data.imageDataUrl,
+        annotations: data.annotations,
+        selectedAnnotationIds: match ? new Set<string>([match.id]) : new Set<string>(),
+        isNewlyCreated: false,
+        ocrDialogState: { mode: 'closed' },
+        errorMessage: null,
+        lineBoundaries: data.lineBoundaries,
+        contributionId: crop.contribution_id,
+      }));
+      if (match) requestFocus(match.id);
+    } catch (error) {
+      dispatch(setError(error instanceof Error ? error.message : 'Failed to open instance'));
     }
   };
 
@@ -336,30 +321,6 @@ export function Toolbar() {
           <LabelIcon />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Start Training">
-        <span>
-          <IconButton onClick={handleTrainingClick} disabled={training.isActive} color="inherit">
-            {training.isActive ? <CircularProgress size={24} color="inherit" /> : <FitnessCenterIcon />}
-          </IconButton>
-        </span>
-      </Tooltip>
-      {training.isActive && training.status && (
-        <Chip
-          label={
-            training.status.state === 'training' && training.status.current_epoch != null && training.status.total_epochs != null
-              ? `Training${training.status.mode ? ` (${training.status.mode})` : ''} ${training.status.current_epoch}/${training.status.total_epochs}`
-              : training.status.state === 'exporting'
-                ? 'Exporting...'
-                : training.status.state === 'deploying'
-                  ? 'Deploying...'
-                  : 'Training...'
-          }
-          size="small"
-          color="primary"
-          variant="outlined"
-          sx={{ ml: 0.5 }}
-        />
-      )}
 
       <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
@@ -401,6 +362,32 @@ export function Toolbar() {
         </span>
       </Tooltip>
 
+      {auth.user && (
+        <>
+          <Box sx={{ flexGrow: 1 }} />
+          <Tooltip title={auth.user.name ? `${auth.user.name} (${auth.user.login})` : auth.user.login}>
+            <Chip
+              avatar={
+                auth.user.avatar_url ? (
+                  <Avatar src={auth.user.avatar_url} alt={auth.user.login} />
+                ) : undefined
+              }
+              label={auth.user.login}
+              size="small"
+              variant="outlined"
+              sx={{ ml: 1 }}
+            />
+          </Tooltip>
+          {auth.authEnabled && (
+            <Tooltip title="Sign out">
+              <IconButton onClick={() => { void auth.logout(); }} color="inherit" size="small">
+                <LogoutIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </>
+      )}
+
       {/* Success snackbar */}
       <Snackbar
         open={successMessage !== null}
@@ -438,93 +425,13 @@ export function Toolbar() {
       <CrossSectionDialog
         open={crossSectionOpen}
         onClose={() => setCrossSectionOpen(false)}
+        onNavigateToNeume={handleNavigateToNeume}
       />
 
       <NeumeClassesDialog
         open={neumeClassesOpen}
         onClose={() => setNeumeClassesOpen(false)}
       />
-
-      {/* Training configuration dialog */}
-      <Dialog open={trainingDialogOpen} onClose={handleTrainingDialogClose}>
-        <DialogTitle>Start Training</DialogTitle>
-        <DialogContent>
-          <ToggleButtonGroup
-            value={trainingType}
-            exclusive
-            onChange={(_e, value) => { if (value !== null) setTrainingType(value); }}
-            size="small"
-            fullWidth
-            sx={{ mb: 2 }}
-          >
-            <ToggleButton value="neumes">Neumes</ToggleButton>
-            <ToggleButton value="segmentation">Segmentation</ToggleButton>
-            <ToggleButton value="both">Both</ToggleButton>
-          </ToggleButtonGroup>
-          <DialogContentText sx={{ mb: 1 }}>
-            {trainingType === 'both'
-              ? 'Train neume detection and line segmentation models from current contributions.'
-              : trainingType === 'neumes'
-                ? 'Train the neume detection model from current contributions.'
-                : 'Train the line segmentation model from current contributions.'}
-          </DialogContentText>
-          <Accordion disableGutters elevation={0} sx={{ '&:before': { display: 'none' } }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0 }}>
-              <Typography variant="body2">Advanced Settings</Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 0 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {(trainingType === 'neumes' || trainingType === 'both') && (
-                  <>
-                    <TextField
-                      label="YOLO Epochs"
-                      type="number"
-                      value={trainingEpochs}
-                      onChange={(e) => setTrainingEpochs(e.target.value)}
-                      placeholder="Auto (100 fresh / 30 incr.)"
-                      inputProps={{ min: 1 }}
-                      size="small"
-                      InputLabelProps={{ shrink: true }}
-                    />
-                    <TextField
-                      label="Image Size"
-                      type="number"
-                      value={trainingImgsz}
-                      onChange={(e) => setTrainingImgsz(Math.max(32, parseInt(e.target.value) || 32))}
-                      inputProps={{ min: 32 }}
-                      size="small"
-                    />
-                  </>
-                )}
-                {(trainingType === 'segmentation' || trainingType === 'both') && (
-                  <TextField
-                    label="Segmentation Epochs"
-                    type="number"
-                    value={trainingSegEpochs}
-                    onChange={(e) => setTrainingSegEpochs(Math.max(1, parseInt(e.target.value) || 1))}
-                    inputProps={{ min: 1 }}
-                    size="small"
-                  />
-                )}
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={trainingFromScratch}
-                      onChange={(e) => setTrainingFromScratch(e.target.checked)}
-                      size="small"
-                    />
-                  }
-                  label="Train from scratch"
-                />
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleTrainingDialogClose}>Cancel</Button>
-          <Button onClick={handleTrainingStart} variant="contained">Start</Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

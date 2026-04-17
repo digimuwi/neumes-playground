@@ -1,4 +1,5 @@
 import { NeumeClass } from '../state/types';
+import { apiFetch } from './apiFetch';
 
 const HTR_BASE_URL = import.meta.env.VITE_HTR_BASE_URL
   || (import.meta.env.DEV ? '/api' : `${window.location.protocol}//${window.location.hostname}:8000`);
@@ -37,7 +38,7 @@ async function parseError(response: Response, fallback: string): Promise<never> 
 }
 
 export async function listNeumeClasses(): Promise<NeumeClass[]> {
-  const response = await fetch(`${HTR_BASE_URL}/neume-classes`);
+  const response = await apiFetch(`${HTR_BASE_URL}/neume-classes`);
   if (!response.ok) {
     await parseError(response, `Failed to list neume classes: ${response.status} ${response.statusText}`);
   }
@@ -47,7 +48,7 @@ export async function listNeumeClasses(): Promise<NeumeClass[]> {
 export async function createNeumeClass(
   payload: CreateNeumeClassRequest
 ): Promise<NeumeClass> {
-  const response = await fetch(`${HTR_BASE_URL}/neume-classes`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/neume-classes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -62,7 +63,7 @@ export async function updateNeumeClass(
   id: number,
   payload: UpdateNeumeClassRequest
 ): Promise<NeumeClass> {
-  const response = await fetch(`${HTR_BASE_URL}/neume-classes/${id}`, {
+  const response = await apiFetch(`${HTR_BASE_URL}/neume-classes/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

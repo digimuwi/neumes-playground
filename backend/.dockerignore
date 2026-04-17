@@ -1,0 +1,26 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.git/
+.DS_Store
+
+# Model version histories (only active models are copied)
+models/neume_versions/
+models/seg_versions/
+
+# Training artifacts
+runs/
+datasets/
+*.pt
+!models/*.pt
+
+# Dev / test
+tests/
+scripts/
+openspec/
+README.md
+
+# Base YOLO weights (only needed for training, not serving)
+yolov8n.pt
+yolo11n.pt

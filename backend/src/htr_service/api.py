@@ -5,11 +5,17 @@ import json
 from pathlib import Path
 from typing import Generator, Optional
 
-from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
+from starlette.middleware.sessions import SessionMiddleware
 
+from . import auth as auth_module
+from . import storage_git
+from .auth import User, require_user
+from .contribution.storage import CONTRIBUTIONS_DIR
+from .neume_registry import DEFAULT_CLASSES_PATH
 from .models.types import (
     BBox,
     ContributionAnnotations,
@@ -27,8 +33,6 @@ from .models.types import (
     ProgressEvent,
     RecognitionResponse,
     Syllable,
-    TrainingStartRequest,
-    TrainingStatus,
     format_sse_event,
 )
 from .contribution import find_image_file, get_contribution, relabel_neume, save_contribution, update_contribution_annotations
@@ -43,11 +47,6 @@ from .pipeline.region import Region, crop_to_region, transform_bbox_to_full_imag
 from .pipeline.segmentation import build_single_line_segmentation, segment_image
 from .pipeline.text_masking import mask_text_regions
 from .syllabification.latin import load_syllabifier, map_chars_to_syllables, merge_char_bboxes
-from .training.yolo_trainer import (
-    TrainingAlreadyRunningError,
-    get_training_status,
-    start_training,
-)
 
 # Paths to model and patterns (relative to package)
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -60,7 +59,15 @@ app = FastAPI(
     version="0.1.0",
 )
 
+_auth_settings = auth_module.get_settings()
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=_auth_settings.session_secret,
+    same_site="lax",
+    https_only=_auth_settings.backend_url.startswith("https://"),
+)
 app.add_middleware(CORSMiddleware, **build_cors_options())
+app.include_router(auth_module.router)
 
 
 class RegionParseError(Exception):
@@ -385,23 +392,42 @@ async def list_neume_classes():
 
 
 @app.post("/neume-classes", status_code=201, response_model=NeumeClass)
-async def create_neume_class_endpoint(body: NeumeClassCreate):
+async def create_neume_class_endpoint(
+    body: NeumeClassCreate,
+    user: User = Depends(require_user),
+):
     """Create a new neume class with a stable appended ID."""
     try:
-        return create_neume_class(body)
+        created = create_neume_class(body)
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    storage_git.commit_paths(
+        [DEFAULT_CLASSES_PATH],
+        message=f"Add neume class {created.key} — {user.login}",
+        author_name=user.login,
+    )
+    return created
 
 
 @app.patch("/neume-classes/{class_id}", response_model=NeumeClass)
-async def update_neume_class_endpoint(class_id: int, body: NeumeClassUpdate):
+async def update_neume_class_endpoint(
+    class_id: int,
+    body: NeumeClassUpdate,
+    user: User = Depends(require_user),
+):
     """Update mutable neume class fields."""
     try:
-        return update_neume_class(class_id, body)
+        updated = update_neume_class(class_id, body)
     except KeyError:
         raise HTTPException(status_code=404, detail="Neume class not found")
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
+    storage_git.commit_paths(
+        [DEFAULT_CLASSES_PATH],
+        message=f"Update neume class {updated.key} — {user.login}",
+        author_name=user.login,
+    )
+    return updated
 
 
 class AnnotationsParseError(Exception):
@@ -425,6 +451,7 @@ def _parse_annotations(annotations_json: str) -> ContributionAnnotations:
 async def contribute(
     image: UploadFile = File(..., description="Image file (JPEG or PNG)"),
     annotations: str = Form(..., description="Annotations JSON with lines and neumes"),
+    user: User = Depends(require_user),
 ):
     """Contribute training data for neume detection model training.
 
@@ -457,7 +484,7 @@ async def contribute(
         raise HTTPException(status_code=422, detail=f"Invalid image file: {e}")
 
     # Save contribution
-    contribution_id, _ = save_contribution(
+    contribution_id, contribution_dir = save_contribution(
         image_bytes=image_bytes,
         annotations=parsed_annotations,
         image_width=image_width,
@@ -466,40 +493,17 @@ async def contribute(
         original_filename=image.filename,
     )
 
+    image_name = image.filename or "image"
+    storage_git.commit_paths(
+        [contribution_dir],
+        message=f"Add contribution {contribution_id} for {image_name} — {user.login}",
+        author_name=user.login,
+    )
+
     return ContributionResponse(
         id=contribution_id,
         message="Contribution saved successfully",
     )
-
-
-@app.post("/training/start", status_code=202, response_model=TrainingStatus)
-async def training_start(
-    request: TrainingStartRequest = TrainingStartRequest(),
-):
-    """Start YOLO and segmentation model training.
-
-    Exports training datasets from current contributions, then fine-tunes
-    both models in independent background threads. Only one training run
-    at a time is allowed.
-    """
-    try:
-        status = start_training(
-            epochs=request.epochs,
-            imgsz=request.imgsz,
-            seg_epochs=request.seg_epochs,
-            from_scratch=request.from_scratch,
-            parallel=request.parallel,
-            training_type=request.training_type,
-        )
-    except TrainingAlreadyRunningError:
-        raise HTTPException(status_code=409, detail="Training already in progress")
-    return status
-
-
-@app.get("/training/status", response_model=TrainingStatus)
-async def training_status():
-    """Get the current YOLO training status."""
-    return get_training_status()
 
 
 @app.get("/contributions", response_model=list[ContributionSummary])
@@ -548,6 +552,7 @@ async def get_contribution_endpoint(contribution_id: str):
 async def update_contribution_endpoint(
     contribution_id: str,
     annotations: ContributionAnnotations,
+    user: User = Depends(require_user),
 ):
     """Update annotations for an existing contribution."""
     try:
@@ -556,6 +561,11 @@ async def update_contribution_endpoint(
         raise HTTPException(status_code=404, detail="Contribution not found")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Contribution not found")
+    storage_git.commit_paths(
+        [CONTRIBUTIONS_DIR / contribution_id / "annotations.json"],
+        message=f"Update annotations on {contribution_id} — {user.login}",
+        author_name=user.login,
+    )
     return ContributionResponse(
         id=contribution_id,
         message="Contribution updated successfully",
@@ -566,6 +576,7 @@ async def update_contribution_endpoint(
 async def relabel_neume_endpoint(
     contribution_id: str,
     body: NeumeRelabel,
+    user: User = Depends(require_user),
 ):
     """Relabel a single neume in a contribution by matching its bounding box."""
     try:
@@ -578,6 +589,11 @@ async def relabel_neume_endpoint(
         raise HTTPException(status_code=404, detail=str(e))
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Contribution not found")
+    storage_git.commit_paths(
+        [CONTRIBUTIONS_DIR / contribution_id / "annotations.json"],
+        message=f"Relabel neume in {contribution_id} to {body.new_type} — {user.login}",
+        author_name=user.login,
+    )
     return ContributionResponse(
         id=contribution_id,
         message="Neume relabeled successfully",

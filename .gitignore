@@ -57,3 +57,12 @@ Thumbs.db
 
 # OpenSpec
 node_modules/
+
+# Backend: model version histories and training artifacts
+backend/models/neume_versions/
+backend/models/seg_versions/
+backend/runs/
+backend/datasets/
+
+# Docker
+deploy/.env

@@ -1,0 +1,9 @@
+# Option 1: With a domain — Caddy auto-provisions Let's Encrypt certs.
+# Set BACKEND_DOMAIN in .env to your domain.
+#
+# Option 2: Without a domain — use the server IP.
+# Set BACKEND_DOMAIN=:80 in .env (plain HTTP, no TLS).
+# You can also use nip.io for free DNS: BACKEND_DOMAIN=1.2.3.4.nip.io
+{$BACKEND_DOMAIN::80} {
+	reverse_proxy backend:8000
+}
