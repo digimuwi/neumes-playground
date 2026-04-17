@@ -244,3 +244,8 @@ classes:
   name: Bivirga episemata
   description: Two virgae with episema
   active: true
+- id: 49
+  key: tractulus
+  name: Tractulus
+  description: '...'
+  active: true

@@ -21,6 +21,7 @@ import { useAppContext } from '../state/context';
 interface CrossSectionDialogProps {
   open: boolean;
   onClose: () => void;
+  onNavigateToNeume?: (crop: NeumeCrop) => void;
 }
 
 interface BinarizedNeume {
@@ -96,7 +97,7 @@ const filterNeumeOptions = (
     || opt.key.toLowerCase().startsWith(inputValue.toLowerCase()),
   );
 
-export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
+export function CrossSectionDialog({ open, onClose, onNavigateToNeume }: CrossSectionDialogProps) {
   const { neumeClasses } = useAppContext();
   const [binarizedNeumes, setBinarizedNeumes] = useState<BinarizedNeume[]>([]);
   const [loading, setLoading] = useState(false);
@@ -161,8 +162,20 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
     loadNeumes();
   }, [open, loadNeumes]);
 
-  // Handle click (left or right) on a crop image
-  const handleCropClick = (
+  // Left-click: jump to the instance in the manuscript view.
+  const handleCropLeftClick = (
+    event: React.MouseEvent<HTMLElement>,
+    bn: BinarizedNeume,
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (onNavigateToNeume) {
+      onNavigateToNeume(bn.crop);
+    }
+  };
+
+  // Right-click: open the relabel context menu.
+  const handleCropContextMenu = (
     event: React.MouseEvent<HTMLElement>,
     bn: BinarizedNeume,
   ) => {
@@ -347,9 +360,9 @@ export function CrossSectionDialog({ open, onClose }: CrossSectionDialogProps) {
                           return (
                             <Box
                               key={bn.key}
-                              title={`${info.name} — ${bn.crop.contribution_id.slice(0, 8)}`}
-                              onClick={(e) => handleCropClick(e, bn)}
-                              onContextMenu={(e) => handleCropClick(e, bn)}
+                              title={`${info.name} — ${bn.crop.contribution_id.slice(0, 8)}\nClick: open in manuscript · Right-click: relabel`}
+                              onClick={(e) => handleCropLeftClick(e, bn)}
+                              onContextMenu={(e) => handleCropContextMenu(e, bn)}
                               sx={{
                                 position: 'relative',
                                 width: displayWidth,

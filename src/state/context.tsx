@@ -23,6 +23,9 @@ interface AppContextValue {
   refreshNeumeClasses: () => Promise<void>;
   createNeumeClass: (payload: CreateNeumeClassRequest) => Promise<NeumeClass>;
   updateNeumeClass: (id: number, payload: UpdateNeumeClassRequest) => Promise<NeumeClass>;
+  focusRequest: string | null;
+  requestFocus: (annotationId: string) => void;
+  clearFocusRequest: () => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -33,7 +36,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [recognitionMode, setRecognitionMode] = useState<RecognitionMode>('manual');
   const [neumeClasses, setNeumeClasses] = useState<NeumeClass[]>(fallbackNeumeClasses);
   const [neumeClassesLoading, setNeumeClassesLoading] = useState(true);
+  const [focusRequest, setFocusRequest] = useState<string | null>(null);
+  const focusCounterRef = useRef(0);
   const saveTimeoutRef = useRef<number | null>(null);
+
+  const requestFocus = React.useCallback((annotationId: string) => {
+    focusCounterRef.current += 1;
+    // Append a counter so repeated focus on the same id still triggers the effect.
+    setFocusRequest(`${annotationId}#${focusCounterRef.current}`);
+  }, []);
+
+  const clearFocusRequest = React.useCallback(() => {
+    setFocusRequest(null);
+  }, []);
 
   const canUndo = historyState.currentIndex > 0;
   const canRedo = historyState.currentIndex < historyState.states.length - 1;
@@ -100,6 +115,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       refreshNeumeClasses,
       createNeumeClass,
       updateNeumeClass,
+      focusRequest,
+      requestFocus,
+      clearFocusRequest,
     }}>
       {children}
     </AppContext.Provider>

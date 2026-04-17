@@ -147,7 +147,7 @@ function drawLineNumber(
 }
 
 export function AnnotationCanvas() {
-  const { state, dispatch, recognitionMode, setRecognitionMode, neumeClasses } = useAppContext();
+  const { state, dispatch, recognitionMode, setRecognitionMode, neumeClasses, focusRequest, clearFocusRequest } = useAppContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -190,6 +190,56 @@ export function AnnotationCanvas() {
     () => sortAnnotationsForCycling(state.annotations),
     [state.annotations]
   );
+
+  // Respond to external focus requests (e.g. from cross-section dialog) by
+  // centering and zooming in on the target annotation.
+  useEffect(() => {
+    if (!focusRequest) return;
+    const id = focusRequest.split('#')[0];
+    const target = state.annotations.find((a) => a.id === id);
+    const container = containerRef.current;
+    const img = imageRef.current;
+    if (!target) {
+      clearFocusRequest();
+      return;
+    }
+    // Wait until the image is loaded; effect will re-run when imageDimensions change.
+    if (!container || !img || imageDimensions.width === 0) return;
+
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    const imgAspect = img.width / img.height;
+    const containerAspect = containerWidth / containerHeight;
+
+    let baseWidth: number;
+    let baseHeight: number;
+    if (imgAspect > containerAspect) {
+      baseWidth = containerWidth;
+      baseHeight = containerWidth / imgAspect;
+    } else {
+      baseHeight = containerHeight;
+      baseWidth = containerHeight * imgAspect;
+    }
+
+    const bounds = polygonBounds(target.polygon);
+    const bboxW = Math.max(1e-6, bounds.maxX - bounds.minX) * baseWidth;
+    const bboxH = Math.max(1e-6, bounds.maxY - bounds.minY) * baseHeight;
+    // Aim for the bbox to occupy ~25% of the smaller container dimension.
+    const targetFill = 0.25;
+    const zoomX = (containerWidth * targetFill) / bboxW;
+    const zoomY = (containerHeight * targetFill) / bboxH;
+    const desiredZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.min(zoomX, zoomY)));
+
+    const cx = (bounds.minX + bounds.maxX) / 2;
+    const cy = (bounds.minY + bounds.maxY) / 2;
+    const newPanX = baseWidth / 2 - cx * baseWidth * desiredZoom;
+    const newPanY = baseHeight / 2 - cy * baseHeight * desiredZoom;
+
+    setZoom(desiredZoom);
+    setPanX(newPanX);
+    setPanY(newPanY);
+    clearFocusRequest();
+  }, [focusRequest, state.annotations, imageDimensions, clearFocusRequest]);
 
   const calculatePopoverPosition = useCallback(() => {
     const container = containerRef.current;
