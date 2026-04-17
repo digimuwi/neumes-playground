@@ -3695,15 +3695,6 @@
       }
     },
     {
-      "type": "porrectus",
-      "bbox": {
-        "x": 2844,
-        "y": 3334,
-        "width": 89,
-        "height": 42
-      }
-    },
-    {
       "type": "pes",
       "bbox": {
         "x": 2290,
@@ -5348,6 +5339,24 @@
         "y": 3509,
         "width": 39,
         "height": 49
+      }
+    },
+    {
+      "type": "clivis",
+      "bbox": {
+        "x": 2845,
+        "y": 3343,
+        "width": 33,
+        "height": 33
+      }
+    },
+    {
+      "type": "porrectus",
+      "bbox": {
+        "x": 2879,
+        "y": 3336,
+        "width": 58,
+        "height": 37
       }
     }
   ]
