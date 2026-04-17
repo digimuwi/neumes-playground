@@ -246,8 +246,8 @@ classes:
   active: true
 - id: 49
   key: tractulus
-  name: Tractulus
-  description: '...'
+  name: Punctum
+  description: Single note (dot)
   active: true
 - id: 50
   key: pes-episematus
