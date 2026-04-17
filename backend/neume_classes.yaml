@@ -1,7 +1,7 @@
 classes:
 - id: 0
   key: punctum
-  name: Tractulus2
+  name: Tractulus
   description: single note (dash)
   active: true
 - id: 1
