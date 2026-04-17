@@ -77,6 +77,17 @@ def _has_staged_changes(cwd: Path) -> bool:
 def _push_async(settings: GitSettings) -> None:
     def _push() -> None:
         try:
+            # Pull-rebase first to handle concurrent pushes from other sources
+            pull_args = ["pull", "--rebase", settings.remote]
+            if settings.branch:
+                pull_args.append(settings.branch)
+            pull_result = _run_git(pull_args, cwd=settings.repo_root, check=False)
+            if pull_result.returncode != 0:
+                logger.warning(
+                    "git pull --rebase failed (rc=%d): %s",
+                    pull_result.returncode, pull_result.stderr.strip(),
+                )
+
             args = ["push", settings.remote]
             if settings.branch:
                 args.append(settings.branch)

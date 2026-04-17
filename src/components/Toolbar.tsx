@@ -223,7 +223,7 @@ export function Toolbar() {
   }, [canUndo, canRedo]);
 
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, width: '100%' }}>
       {/* Hidden file inputs */}
       <input
         ref={imageInputRef}
