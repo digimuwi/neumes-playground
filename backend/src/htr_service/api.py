@@ -63,7 +63,7 @@ _auth_settings = auth_module.get_settings()
 app.add_middleware(
     SessionMiddleware,
     secret_key=_auth_settings.session_secret,
-    same_site="lax",
+    same_site="none" if _auth_settings.backend_url.startswith("https://") else "lax",
     https_only=_auth_settings.backend_url.startswith("https://"),
 )
 app.add_middleware(CORSMiddleware, **build_cors_options())
