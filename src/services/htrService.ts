@@ -5,7 +5,7 @@ import { normalizePolygon, denormalizePolygon, rectToPolygon, polygonBounds } fr
 import { apiFetch } from './apiFetch';
 
 const HTR_BASE_URL = import.meta.env.VITE_HTR_BASE_URL
-  || (import.meta.env.DEV ? '/api' : `${window.location.protocol}//${window.location.hostname}:8000`);
+  || (import.meta.env.DEV ? '/api' : '');
 
 // --- Backend response types (new nested format) ---
 
