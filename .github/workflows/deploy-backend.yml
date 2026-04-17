@@ -4,7 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'backend/**'
+      - 'backend/src/**'
+      - 'backend/pyproject.toml'
   workflow_dispatch:
 
 concurrency:
