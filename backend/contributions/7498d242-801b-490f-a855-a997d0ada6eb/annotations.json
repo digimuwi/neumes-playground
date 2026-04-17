@@ -7003,15 +7003,6 @@
     {
       "type": "levare",
       "bbox": {
-        "x": 3034,
-        "y": 3263,
-        "width": 16,
-        "height": 27
-      }
-    },
-    {
-      "type": "levare",
-      "bbox": {
         "x": 2229,
         "y": 3278,
         "width": 17,
@@ -7649,7 +7640,7 @@
       }
     },
     {
-      "type": "clivis episema praebipunctis",
+      "type": "unknown",
       "bbox": {
         "x": 2257,
         "y": 1960,
@@ -7793,7 +7784,7 @@
       }
     },
     {
-      "type": "unknown",
+      "type": "pes-quassus",
       "bbox": {
         "x": 2718,
         "y": 2169,
@@ -8195,6 +8186,60 @@
         "y": 3476,
         "width": 62,
         "height": 32
+      }
+    },
+    {
+      "type": "clivis episema",
+      "bbox": {
+        "x": 2764,
+        "y": 3106,
+        "width": 40,
+        "height": 44
+      }
+    },
+    {
+      "type": "celeriter",
+      "bbox": {
+        "x": 2799,
+        "y": 3135,
+        "width": 27,
+        "height": 21
+      }
+    },
+    {
+      "type": "clivis episema",
+      "bbox": {
+        "x": 2912,
+        "y": 3138,
+        "width": 55,
+        "height": 43
+      }
+    },
+    {
+      "type": "clivis episema",
+      "bbox": {
+        "x": 2640,
+        "y": 3137,
+        "width": 41,
+        "height": 43
+      }
+    },
+    {
+      "type": "quilisma",
+      "bbox": {
+        "x": 2679,
+        "y": 3145,
+        "width": 67,
+        "height": 26
+      }
+    },
+    {
+      "type": "porrectus flexus",
+      "bbox": {
+        "x": 2992,
+        "y": 3262,
+        "width": 60,
+        "height": 47
       }
     }
   ]
