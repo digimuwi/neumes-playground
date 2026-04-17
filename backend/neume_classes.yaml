@@ -254,3 +254,8 @@ classes:
   name: Pes episematus
   description: Pes with episema
   active: true
+- id: 51
+  key: pes-quassus
+  name: Pes quassus
+  description: '...'
+  active: true
