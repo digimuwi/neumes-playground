@@ -1,8 +1,8 @@
 classes:
 - id: 0
   key: punctum
-  name: Punctum
-  description: Single note (dot)
+  name: Tractulus2
+  description: single note (dash)
   active: true
 - id: 1
   key: clivis
