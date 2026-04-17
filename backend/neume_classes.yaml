@@ -264,3 +264,8 @@ classes:
   name: Pes quassus episematus
   description: '...'
   active: true
+- id: 53
+  key: tractulus episema
+  name: Tractulus cum episema
+  description: single note (dash) with
+  active: true
