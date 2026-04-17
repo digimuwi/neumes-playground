@@ -6,8 +6,7 @@ export default defineConfig(({ mode }) => {
   const proxyTarget = env.VITE_HTR_PROXY_TARGET || 'http://127.0.0.1:8000';
 
   return {
-    // For GitHub Pages at digimuwi.github.io/neumes-playground/
-    base: mode === 'production' ? '/neumes-playground/' : '/',
+    base: '/',
     plugins: [react()],
     server: {
       host: '0.0.0.0',
