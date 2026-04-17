@@ -6488,7 +6488,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes-quassus",
       "bbox": {
         "x": 2619,
         "y": 1118,
