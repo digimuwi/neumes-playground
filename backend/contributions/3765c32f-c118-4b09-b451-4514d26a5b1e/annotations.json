@@ -3425,15 +3425,6 @@
       }
     },
     {
-      "type": "clivis",
-      "bbox": {
-        "x": 2361,
-        "y": 2258,
-        "width": 42,
-        "height": 67
-      }
-    },
-    {
       "type": "climacus",
       "bbox": {
         "x": 2186,
