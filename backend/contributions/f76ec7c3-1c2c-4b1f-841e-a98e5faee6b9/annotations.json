@@ -9130,24 +9130,6 @@
       }
     },
     {
-      "type": "climacus episema",
-      "bbox": {
-        "x": 2943,
-        "y": 602,
-        "width": 36,
-        "height": 45
-      }
-    },
-    {
-      "type": "virga episema",
-      "bbox": {
-        "x": 2920,
-        "y": 597,
-        "width": 39,
-        "height": 48
-      }
-    },
-    {
       "type": "torculus",
       "bbox": {
         "x": 3005,
@@ -10486,6 +10468,15 @@
         "y": 2203,
         "width": 43,
         "height": 49
+      }
+    },
+    {
+      "type": "bivirga episamata",
+      "bbox": {
+        "x": 2926,
+        "y": 597,
+        "width": 53,
+        "height": 50
       }
     }
   ]
