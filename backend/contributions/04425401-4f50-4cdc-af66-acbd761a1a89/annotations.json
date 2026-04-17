@@ -8042,15 +8042,6 @@
     {
       "type": "clivis",
       "bbox": {
-        "x": 1662,
-        "y": 2398,
-        "width": 57,
-        "height": 49
-      }
-    },
-    {
-      "type": "clivis",
-      "bbox": {
         "x": 1034,
         "y": 1643,
         "width": 27,
@@ -9810,6 +9801,24 @@
         "y": 2109,
         "width": 60,
         "height": 45
+      }
+    },
+    {
+      "type": "clivis",
+      "bbox": {
+        "x": 1662,
+        "y": 2399,
+        "width": 35,
+        "height": 37
+      }
+    },
+    {
+      "type": "oriscus",
+      "bbox": {
+        "x": 1691,
+        "y": 2399,
+        "width": 26,
+        "height": 46
       }
     }
   ]
