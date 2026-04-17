@@ -11470,7 +11470,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes-episematus",
       "bbox": {
         "x": 842,
         "y": 2162,
