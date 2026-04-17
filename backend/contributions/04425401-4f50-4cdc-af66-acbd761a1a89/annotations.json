@@ -8015,15 +8015,6 @@
     {
       "type": "punctum",
       "bbox": {
-        "x": 1802,
-        "y": 2425,
-        "width": 28,
-        "height": 10
-      }
-    },
-    {
-      "type": "punctum",
-      "bbox": {
         "x": 1719,
         "y": 2573,
         "width": 18,
@@ -8384,15 +8375,6 @@
     {
       "type": "virga",
       "bbox": {
-        "x": 1843,
-        "y": 2374,
-        "width": 41,
-        "height": 37
-      }
-    },
-    {
-      "type": "virga",
-      "bbox": {
         "x": 702,
         "y": 1230,
         "width": 33,
@@ -8451,15 +8433,6 @@
         "y": 1225,
         "width": 99,
         "height": 81
-      }
-    },
-    {
-      "type": "salicus",
-      "bbox": {
-        "x": 1802,
-        "y": 2374,
-        "width": 83,
-        "height": 64
       }
     },
     {
@@ -9804,24 +9777,6 @@
       }
     },
     {
-      "type": "virga episema",
-      "bbox": {
-        "x": 1545,
-        "y": 2109,
-        "width": 45,
-        "height": 45
-      }
-    },
-    {
-      "type": "virga episema",
-      "bbox": {
-        "x": 1568,
-        "y": 2112,
-        "width": 40,
-        "height": 40
-      }
-    },
-    {
       "type": "climacus episema",
       "bbox": {
         "x": 1634,
@@ -9837,6 +9792,24 @@
         "y": 2090,
         "width": 49,
         "height": 53
+      }
+    },
+    {
+      "type": "virga",
+      "bbox": {
+        "x": 1803,
+        "y": 2376,
+        "width": 82,
+        "height": 68
+      }
+    },
+    {
+      "type": "bivirga episamata",
+      "bbox": {
+        "x": 1548,
+        "y": 2109,
+        "width": 60,
+        "height": 45
       }
     }
   ]
