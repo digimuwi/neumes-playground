@@ -249,3 +249,8 @@ classes:
   name: Tractulus
   description: '...'
   active: true
+- id: 50
+  key: pes-episematus
+  name: Pes episematus
+  description: Pes with episema
+  active: true
