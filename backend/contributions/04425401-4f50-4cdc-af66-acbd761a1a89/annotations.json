@@ -8157,7 +8157,7 @@
       }
     },
     {
-      "type": "pes",
+      "type": "pes-episematus",
       "bbox": {
         "x": 593,
         "y": 3500,
@@ -8172,15 +8172,6 @@
         "y": 3525,
         "width": 57,
         "height": 47
-      }
-    },
-    {
-      "type": "pes",
-      "bbox": {
-        "x": 512,
-        "y": 3520,
-        "width": 24,
-        "height": 21
       }
     },
     {
@@ -8375,15 +8366,6 @@
     {
       "type": "virga",
       "bbox": {
-        "x": 512,
-        "y": 3520,
-        "width": 24,
-        "height": 21
-      }
-    },
-    {
-      "type": "virga",
-      "bbox": {
         "x": 953,
         "y": 2356,
         "width": 47,
@@ -8451,15 +8433,6 @@
         "y": 2570,
         "width": 31,
         "height": 40
-      }
-    },
-    {
-      "type": "virga episema",
-      "bbox": {
-        "x": 594,
-        "y": 3500,
-        "width": 53,
-        "height": 50
       }
     },
     {
@@ -9819,6 +9792,15 @@
         "y": 2399,
         "width": 26,
         "height": 46
+      }
+    },
+    {
+      "type": "virga",
+      "bbox": {
+        "x": 500,
+        "y": 3521,
+        "width": 36,
+        "height": 36
       }
     }
   ]
