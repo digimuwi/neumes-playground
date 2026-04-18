@@ -6084,7 +6084,7 @@
       }
     },
     {
-      "type": "equaliter",
+      "type": "punctum",
       "bbox": {
         "x": 1907,
         "y": 1255,
@@ -6270,15 +6270,6 @@
         "y": 1794,
         "width": 64,
         "height": 46
-      }
-    },
-    {
-      "type": "torculus",
-      "bbox": {
-        "x": 3060,
-        "y": 3228,
-        "width": 66,
-        "height": 55
       }
     },
     {
@@ -6594,15 +6585,6 @@
         "y": 1280,
         "width": 65,
         "height": 12
-      }
-    },
-    {
-      "type": "quilisma",
-      "bbox": {
-        "x": 3060,
-        "y": 3228,
-        "width": 67,
-        "height": 56
       }
     },
     {
@@ -7425,7 +7407,7 @@
       }
     },
     {
-      "type": "tractulus episema",
+      "type": "punctum",
       "bbox": {
         "x": 1762,
         "y": 1827,
@@ -8205,6 +8187,15 @@
         "y": 1208,
         "width": 33,
         "height": 18
+      }
+    },
+    {
+      "type": "quilisma",
+      "bbox": {
+        "x": 3060,
+        "y": 3228,
+        "width": 68,
+        "height": 55
       }
     }
   ]
