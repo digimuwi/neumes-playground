@@ -98,6 +98,10 @@ export function setContributionId(id: string | null): Action {
   return { type: 'SET_CONTRIBUTION_ID', payload: id };
 }
 
+export function setContributionVersion(version: string | null): Action {
+  return { type: 'SET_CONTRIBUTION_VERSION', payload: version };
+}
+
 export function setMetadata(metadata: DocumentMetadata): Action {
   return { type: 'SET_METADATA', payload: metadata };
 }

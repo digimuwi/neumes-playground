@@ -15,6 +15,7 @@ export const initialAppState: AppState = {
   errorMessage: null,
   lineBoundaries: [],
   contributionId: null,
+  contributionVersion: null,
 };
 
 export const initialHistoryState: HistoryState = {
@@ -22,9 +23,10 @@ export const initialHistoryState: HistoryState = {
   currentIndex: 0,
 };
 
-interface PersistedAppState extends Omit<AppState, 'selectedAnnotationIds' | 'ocrDialogState' | 'errorMessage' | 'lineBoundaries' | 'contributionId' | 'metadata'> {
+interface PersistedAppState extends Omit<AppState, 'selectedAnnotationIds' | 'ocrDialogState' | 'errorMessage' | 'lineBoundaries' | 'contributionId' | 'contributionVersion' | 'metadata'> {
   lineBoundaries?: AppState['lineBoundaries'];
   contributionId?: string | null;
+  contributionVersion?: string | null;
   metadata?: AppState['metadata'];
   selectedAnnotationIds?: string[];
   // Legacy field for backward compatibility
@@ -54,6 +56,7 @@ export function loadStateFromStorage(): HistoryState {
         errorMessage: null,
         lineBoundaries: persisted.lineBoundaries || [],
         contributionId: persisted.contributionId ?? null,
+        contributionVersion: persisted.contributionVersion ?? null,
         metadata: persisted.metadata,
       };
       return {
@@ -77,6 +80,7 @@ export function saveStateToStorage(state: AppState): void {
       isNewlyCreated: state.isNewlyCreated,
       lineBoundaries: state.lineBoundaries,
       contributionId: state.contributionId,
+      contributionVersion: state.contributionVersion,
       metadata: state.metadata,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
@@ -120,6 +124,7 @@ export function historyReducer(state: HistoryState, action: Action): HistoryStat
     action.type === 'SET_ERROR' ||
     action.type === 'SET_LINE_BOUNDARIES' ||
     action.type === 'SET_CONTRIBUTION_ID' ||
+    action.type === 'SET_CONTRIBUTION_VERSION' ||
     action.type === 'SET_METADATA'
   ) {
     const newStates = [...state.states];
@@ -143,6 +148,7 @@ function appReducer(state: AppState, action: Action): AppState {
         draft.selectedAnnotationIds = new Set<string>();
         draft.lineBoundaries = [];
         draft.contributionId = null;
+        draft.contributionVersion = null;
       });
 
     case 'ADD_ANNOTATION':
@@ -238,6 +244,13 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'SET_CONTRIBUTION_ID':
       return produce(state, (draft) => {
         draft.contributionId = action.payload;
+        // A new id means the old version no longer applies.
+        draft.contributionVersion = null;
+      });
+
+    case 'SET_CONTRIBUTION_VERSION':
+      return produce(state, (draft) => {
+        draft.contributionVersion = action.payload;
       });
 
     case 'SET_METADATA':

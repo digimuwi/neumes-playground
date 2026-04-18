@@ -664,3 +664,111 @@ class TestUpdateContributionEndpoint:
             json={"lines": [], "neumes": []},
         )
         assert response.status_code == 404
+
+    def test_get_returns_version_and_etag(self):
+        """GET /contributions/{id} includes version in body and ETag header."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440030"
+        self._make_contribution(contrib_id)
+
+        response = self.client.get(f"/contributions/{contrib_id}")
+        assert response.status_code == 200
+        version = response.json()["version"]
+        assert isinstance(version, str) and len(version) == 64
+        assert response.headers["etag"].strip('"') == version
+
+    def test_update_with_matching_if_match_succeeds(self):
+        """PUT with correct If-Match header succeeds and returns a new version."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440031"
+        self._make_contribution(contrib_id)
+        version = self.client.get(f"/contributions/{contrib_id}").json()["version"]
+
+        response = self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": []},
+            headers={"If-Match": f'"{version}"'},
+        )
+        assert response.status_code == 200
+        new_version = response.json()["version"]
+        assert new_version and new_version != version
+        assert response.headers["etag"].strip('"') == new_version
+
+    def test_update_with_stale_if_match_returns_412(self):
+        """PUT with stale If-Match returns 412 and does not overwrite."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440032"
+        self._make_contribution(contrib_id)
+        stale_version = self.client.get(f"/contributions/{contrib_id}").json()["version"]
+
+        # Simulate another writer updating the file
+        self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": [
+                {"type": "punctum", "bbox": {"x": 1, "y": 1, "width": 2, "height": 2}},
+            ]},
+        )
+
+        response = self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": []},
+            headers={"If-Match": f'"{stale_version}"'},
+        )
+        assert response.status_code == 412
+        assert "modified by someone else" in response.json()["detail"]
+        # Ensure the intervening write was NOT reverted
+        stored = json.loads(
+            (self.contrib_dir / contrib_id / "annotations.json").read_text()
+        )
+        assert len(stored["neumes"]) == 1
+
+    def test_update_without_if_match_still_works(self):
+        """PUT without If-Match succeeds (backwards-compatible, logs warning)."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440033"
+        self._make_contribution(contrib_id)
+
+        response = self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": []},
+        )
+        assert response.status_code == 200
+        assert response.json()["version"]
+
+    def test_update_with_wildcard_if_match_skips_check(self):
+        """PUT with If-Match: * bypasses the version check per RFC 7232."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440034"
+        self._make_contribution(contrib_id)
+
+        response = self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": []},
+            headers={"If-Match": "*"},
+        )
+        assert response.status_code == 200
+
+    def test_relabel_with_stale_if_match_returns_412(self):
+        """PATCH /neumes with stale If-Match returns 412."""
+        contrib_id = "550e8400-e29b-41d4-a716-446655440035"
+        d = self.contrib_dir / contrib_id
+        d.mkdir()
+        Image.new("RGB", (200, 300), "white").save(d / "image.png")
+        (d / "annotations.json").write_text(json.dumps({
+            "image": {"filename": "image.png", "width": 200, "height": 300},
+            "lines": [],
+            "neumes": [
+                {"type": "punctum", "bbox": {"x": 1, "y": 2, "width": 3, "height": 4}},
+            ],
+        }))
+        stale_version = self.client.get(f"/contributions/{contrib_id}").json()["version"]
+
+        # Bump the file via an unchecked PUT
+        self.client.put(
+            f"/contributions/{contrib_id}",
+            json={"lines": [], "neumes": [
+                {"type": "virga", "bbox": {"x": 1, "y": 2, "width": 3, "height": 4}},
+            ]},
+        )
+
+        response = self.client.patch(
+            f"/contributions/{contrib_id}/neumes",
+            json={"bbox": {"x": 1, "y": 2, "width": 3, "height": 4}, "new_type": "clivis"},
+            headers={"If-Match": f'"{stale_version}"'},
+        )
+        assert response.status_code == 412
