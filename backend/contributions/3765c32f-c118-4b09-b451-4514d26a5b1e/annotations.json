@@ -3409,15 +3409,6 @@
     {
       "type": "clivis",
       "bbox": {
-        "x": 2447,
-        "y": 1440,
-        "width": 84,
-        "height": 38
-      }
-    },
-    {
-      "type": "clivis",
-      "bbox": {
         "x": 1857,
         "y": 2575,
         "width": 82,
@@ -5357,6 +5348,24 @@
         "y": 3336,
         "width": 58,
         "height": 37
+      }
+    },
+    {
+      "type": "clivis",
+      "bbox": {
+        "x": 2449,
+        "y": 1445,
+        "width": 33,
+        "height": 32
+      }
+    },
+    {
+      "type": "pes-quassus",
+      "bbox": {
+        "x": 2485,
+        "y": 1442,
+        "width": 49,
+        "height": 30
       }
     }
   ]
