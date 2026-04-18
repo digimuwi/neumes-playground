@@ -6815,15 +6815,6 @@
     {
       "type": "cephalicus",
       "bbox": {
-        "x": 2271,
-        "y": 3263,
-        "width": 59,
-        "height": 48
-      }
-    },
-    {
-      "type": "cephalicus",
-      "bbox": {
         "x": 2462,
         "y": 1802,
         "width": 42,
