@@ -6275,15 +6275,6 @@
     {
       "type": "climacus",
       "bbox": {
-        "x": 1761,
-        "y": 642,
-        "width": 58,
-        "height": 60
-      }
-    },
-    {
-      "type": "climacus",
-      "bbox": {
         "x": 2434,
         "y": 2962,
         "width": 41,
@@ -6369,15 +6360,6 @@
         "y": 3496,
         "width": 55,
         "height": 48
-      }
-    },
-    {
-      "type": "pes",
-      "bbox": {
-        "x": 1737,
-        "y": 1226,
-        "width": 67,
-        "height": 31
       }
     },
     {
@@ -6743,15 +6725,6 @@
     {
       "type": "virga episema",
       "bbox": {
-        "x": 2202,
-        "y": 3476,
-        "width": 39,
-        "height": 43
-      }
-    },
-    {
-      "type": "virga episema",
-      "bbox": {
         "x": 1772,
         "y": 2022,
         "width": 43,
@@ -6882,15 +6855,6 @@
         "y": 1245,
         "width": 69,
         "height": 38
-      }
-    },
-    {
-      "type": "pes quadratus",
-      "bbox": {
-        "x": 1738,
-        "y": 1226,
-        "width": 66,
-        "height": 31
       }
     },
     {
@@ -8178,6 +8142,15 @@
         "y": 1297,
         "width": 15,
         "height": 16
+      }
+    },
+    {
+      "type": "quilisma",
+      "bbox": {
+        "x": 1738,
+        "y": 1228,
+        "width": 65,
+        "height": 28
       }
     }
   ]
