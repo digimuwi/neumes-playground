@@ -6230,15 +6230,6 @@
     {
       "type": "clivis",
       "bbox": {
-        "x": 2547,
-        "y": 1280,
-        "width": 40,
-        "height": 11
-      }
-    },
-    {
-      "type": "clivis",
-      "bbox": {
         "x": 1930,
         "y": 3491,
         "width": 34,
@@ -6678,15 +6669,6 @@
       }
     },
     {
-      "type": "pes subbipunctis",
-      "bbox": {
-        "x": 2433,
-        "y": 2962,
-        "width": 42,
-        "height": 40
-      }
-    },
-    {
       "type": "celeriter",
       "bbox": {
         "x": 2483,
@@ -6774,15 +6756,6 @@
         "y": 2022,
         "width": 43,
         "height": 29
-      }
-    },
-    {
-      "type": "clivis episema",
-      "bbox": {
-        "x": 2548,
-        "y": 1249,
-        "width": 53,
-        "height": 42
       }
     },
     {
@@ -8196,6 +8169,24 @@
         "y": 3228,
         "width": 68,
         "height": 55
+      }
+    },
+    {
+      "type": "clivis episema",
+      "bbox": {
+        "x": 2549,
+        "y": 1249,
+        "width": 44,
+        "height": 40
+      }
+    },
+    {
+      "type": "stropha",
+      "bbox": {
+        "x": 2717,
+        "y": 1297,
+        "width": 15,
+        "height": 16
       }
     }
   ]
