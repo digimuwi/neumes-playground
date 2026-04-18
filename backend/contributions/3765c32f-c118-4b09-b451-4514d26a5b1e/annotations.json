@@ -3913,15 +3913,6 @@
     {
       "type": "pressus",
       "bbox": {
-        "x": 1927,
-        "y": 2630,
-        "width": 47,
-        "height": 64
-      }
-    },
-    {
-      "type": "pressus",
-      "bbox": {
         "x": 2222,
         "y": 2559,
         "width": 48,
