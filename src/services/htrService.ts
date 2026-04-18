@@ -264,6 +264,19 @@ interface ContributionAnnotations {
 interface ContributionResponse {
   id: string;
   message: string;
+  version?: string;
+}
+
+/**
+ * Thrown when a PUT/PATCH is rejected because the contribution was modified
+ * by someone else since this client last loaded it. Callers should prompt the
+ * user to reload before re-saving.
+ */
+export class ContributionConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ContributionConflictError';
+  }
 }
 
 /**
@@ -415,6 +428,7 @@ interface ContributionDetailResponse {
   image: { filename: string; width: number; height: number; data_url: string };
   lines: Array<{ boundary: number[][]; syllables: Array<{ text: string; boundary: number[][] }> }>;
   neumes: Array<{ type: string; bbox: BBox }>;
+  version: string;
 }
 
 export interface ContributionData {
@@ -423,6 +437,7 @@ export interface ContributionData {
   lineBoundaries: LineBoundary[];
   imageWidth: number;
   imageHeight: number;
+  version: string;
 }
 
 /**
@@ -461,6 +476,7 @@ export async function getContribution(id: string): Promise<ContributionData> {
     lineBoundaries,
     imageWidth: detail.image.width,
     imageHeight: detail.image.height,
+    version: detail.version,
   };
 }
 
@@ -487,17 +503,25 @@ export async function listNeumes(type?: string): Promise<NeumeCrop[]> {
 
 /**
  * Relabel a single neume in a contribution by matching its bounding box.
+ *
+ * When `expectedVersion` is passed, it is sent as `If-Match` so the server
+ * rejects the request (412) if the contribution was modified concurrently.
+ * Returns the new version for the caller to store for their next request.
  */
 export async function relabelNeume(
   contributionId: string,
   bbox: { x: number; y: number; width: number; height: number },
   newType: string,
-): Promise<void> {
+  expectedVersion?: string,
+): Promise<string | undefined> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (expectedVersion) headers['If-Match'] = `"${expectedVersion}"`;
+
   const response = await apiFetch(
     `${HTR_BASE_URL}/contributions/${encodeURIComponent(contributionId)}/neumes`,
     {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ bbox, new_type: newType }),
     },
   );
@@ -511,25 +535,40 @@ export async function relabelNeume(
     } catch {
       // Use default error message
     }
+    if (response.status === 412) {
+      throw new ContributionConflictError(errorMessage);
+    }
     throw new Error(errorMessage);
   }
+
+  const data: ContributionResponse = await response.json();
+  return data.version;
 }
 
 /**
  * Update an existing contribution's annotations.
+ *
+ * When `expectedVersion` is passed, it is sent as `If-Match` so the server
+ * rejects the request (412) if the contribution was modified concurrently —
+ * preventing silent overwrites of another user's edits. Callers should treat
+ * a `ContributionConflictError` as non-fatal and prompt the user to reload.
  */
 export async function updateContribution(
   id: string,
   imageDataUrl: string,
   annotations: Annotation[],
-  lineBoundaries: LineBoundary[] = []
+  lineBoundaries: LineBoundary[] = [],
+  expectedVersion?: string,
 ): Promise<ContributionResponse> {
   const { dimensions } = await imageDataUrlToBlob(imageDataUrl);
   const contributionAnnotations = transformAnnotationsForContribution(annotations, dimensions, lineBoundaries);
 
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (expectedVersion) headers['If-Match'] = `"${expectedVersion}"`;
+
   const response = await apiFetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(contributionAnnotations),
   });
 
@@ -543,6 +582,9 @@ export async function updateContribution(
       }
     } catch {
       // Use default error message
+    }
+    if (response.status === 412) {
+      throw new ContributionConflictError(errorMessage);
     }
     throw new Error(errorMessage);
   }

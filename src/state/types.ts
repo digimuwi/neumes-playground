@@ -59,6 +59,7 @@ export interface AppState {
   errorMessage: string | null;
   lineBoundaries: LineBoundary[];
   contributionId: string | null;
+  contributionVersion: string | null;
   metadata?: DocumentMetadata;
 }
 
@@ -86,4 +87,5 @@ export type Action =
   | { type: 'CLEAR_ANNOTATIONS' }
   | { type: 'SET_LINE_BOUNDARIES'; payload: LineBoundary[] }
   | { type: 'SET_CONTRIBUTION_ID'; payload: string | null }
+  | { type: 'SET_CONTRIBUTION_VERSION'; payload: string | null }
   | { type: 'SET_METADATA'; payload: DocumentMetadata };

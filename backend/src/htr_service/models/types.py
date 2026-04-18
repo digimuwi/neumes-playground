@@ -177,6 +177,10 @@ class ContributionResponse(BaseModel):
 
     id: str = Field(..., description="Unique identifier for the contribution")
     message: str = Field(..., description="Status message")
+    version: Optional[str] = Field(
+        None,
+        description="sha256 of annotations.json after the write; use as If-Match for the next update",
+    )
 
 
 class ImageMetadata(BaseModel):
@@ -213,5 +217,9 @@ class ContributionDetail(BaseModel):
     image: ImageDetail = Field(..., description="Image with base64 data URL")
     lines: list[LineInput] = Field(default_factory=list, description="Line annotations")
     neumes: list[NeumeInput] = Field(default_factory=list, description="Neume annotations")
+    version: str = Field(
+        ...,
+        description="sha256 of annotations.json; send back as If-Match on the next update",
+    )
 
 

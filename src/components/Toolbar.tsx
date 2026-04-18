@@ -13,11 +13,11 @@ import LabelIcon from '@mui/icons-material/Label';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useAppContext } from '../state/context';
 import { useAuth } from '../state/auth';
-import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId, selectAnnotation } from '../state/actions';
+import { undo, redo, setImage, setOcrDialog, setError, loadState, setContributionId, setContributionVersion, selectAnnotation } from '../state/actions';
 import { exportMEI, getImageDimensions } from '../utils/meiExport';
 import { exportAnnotationsJSON, AnnotationsFile } from '../utils/jsonExport';
 import { parseAnnotationsJSON } from '../utils/jsonImport';
-import { contributeTrainingData, getContribution, updateContribution, NeumeCrop } from '../services/htrService';
+import { contributeTrainingData, getContribution, updateContribution, NeumeCrop, ContributionConflictError } from '../services/htrService';
 import { findNeumeAnnotation } from '../utils/findNeumeAnnotation';
 import { ContributionsDialog } from './ContributionsDialog';
 import { CrossSectionDialog } from './CrossSectionDialog';
@@ -97,6 +97,7 @@ export function Toolbar() {
       errorMessage: null,
       lineBoundaries: [],
       contributionId: null,
+      contributionVersion: null,
       metadata: data.metadata,
     }));
   };
@@ -126,7 +127,16 @@ export function Toolbar() {
     setIsContributing(true);
     try {
       if (state.contributionId) {
-        await updateContribution(state.contributionId, state.imageDataUrl, state.annotations, state.lineBoundaries);
+        const response = await updateContribution(
+          state.contributionId,
+          state.imageDataUrl,
+          state.annotations,
+          state.lineBoundaries,
+          state.contributionVersion ?? undefined,
+        );
+        if (response.version) {
+          dispatch(setContributionVersion(response.version));
+        }
         setSuccessMessage('Contribution updated successfully');
       } else {
         const response = await contributeTrainingData(state.imageDataUrl, state.annotations, state.lineBoundaries);
@@ -134,7 +144,14 @@ export function Toolbar() {
         setSuccessMessage('Contribution submitted successfully');
       }
     } catch (error) {
-      dispatch(setError(error instanceof Error ? error.message : 'Contribution failed'));
+      if (error instanceof ContributionConflictError) {
+        dispatch(setError(
+          'Someone else edited this contribution while you were working on it. ' +
+          'Reload the contribution to see their changes before saving again.'
+        ));
+      } else {
+        dispatch(setError(error instanceof Error ? error.message : 'Contribution failed'));
+      }
     } finally {
       setIsContributing(false);
     }
@@ -154,6 +171,7 @@ export function Toolbar() {
         errorMessage: null,
         lineBoundaries: data.lineBoundaries,
         contributionId: id,
+        contributionVersion: data.version,
       }));
       setSuccessMessage('Contribution loaded');
     } catch (error) {
@@ -187,6 +205,7 @@ export function Toolbar() {
         errorMessage: null,
         lineBoundaries: data.lineBoundaries,
         contributionId: crop.contribution_id,
+        contributionVersion: data.version,
       }));
       if (match) requestFocus(match.id);
     } catch (error) {

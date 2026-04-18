@@ -2,10 +2,13 @@
 
 import io
 import json
+import logging
 from pathlib import Path
 from typing import Generator, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+logger = logging.getLogger(__name__)
+
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
@@ -35,7 +38,14 @@ from .models.types import (
     Syllable,
     format_sse_event,
 )
-from .contribution import find_image_file, get_contribution, relabel_neume, save_contribution, update_contribution_annotations
+from .contribution import (
+    VersionConflictError,
+    find_image_file,
+    get_contribution,
+    relabel_neume,
+    save_contribution,
+    update_contribution_annotations,
+)
 from .contribution.storage import list_contributions
 from .cors import build_cors_options
 from .neume_registry import create_neume_class, load_neume_registry, update_neume_class
@@ -538,13 +548,30 @@ async def list_contributions_endpoint():
     return summaries
 
 
+def _parse_if_match(if_match: str | None) -> str | None:
+    """Strip surrounding quotes from an ETag-style If-Match header.
+
+    Returns None when the header is absent or equals '*' (RFC 7232 wildcard
+    that matches any current version — we just skip the check).
+    """
+    if if_match is None:
+        return None
+    value = if_match.strip()
+    if value == "*" or value == "":
+        return None
+    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
+        value = value[1:-1]
+    return value
+
+
 @app.get("/contributions/{contribution_id}", response_model=ContributionDetail)
-async def get_contribution_endpoint(contribution_id: str):
+async def get_contribution_endpoint(contribution_id: str, response: Response):
     """Retrieve a single contribution with full data including base64 image."""
     try:
         data = get_contribution(contribution_id)
     except (ValueError, FileNotFoundError):
         raise HTTPException(status_code=404, detail="Contribution not found")
+    response.headers["ETag"] = f'"{data["version"]}"'
     return data
 
 
@@ -552,11 +579,34 @@ async def get_contribution_endpoint(contribution_id: str):
 async def update_contribution_endpoint(
     contribution_id: str,
     annotations: ContributionAnnotations,
+    response: Response,
     user: User = Depends(require_user),
+    if_match: str | None = Header(default=None, alias="If-Match"),
 ):
-    """Update annotations for an existing contribution."""
+    """Update annotations for an existing contribution.
+
+    Send the ETag from the last GET as `If-Match` to prevent overwriting
+    concurrent edits; returns 412 on mismatch.
+    """
+    expected_version = _parse_if_match(if_match)
+    if expected_version is None:
+        logger.warning(
+            "PUT /contributions/%s from %s without If-Match — concurrent edits may be lost",
+            contribution_id, user.login,
+        )
     try:
-        update_contribution_annotations(contribution_id, annotations)
+        new_version = update_contribution_annotations(
+            contribution_id, annotations, expected_version=expected_version,
+        )
+    except VersionConflictError as e:
+        raise HTTPException(
+            status_code=412,
+            detail=(
+                "Contribution was modified by someone else since you loaded it. "
+                "Reload to see the latest version before saving again."
+            ),
+            headers={"ETag": f'"{e.actual}"'},
+        )
     except ValueError:
         raise HTTPException(status_code=404, detail="Contribution not found")
     except FileNotFoundError:
@@ -566,9 +616,11 @@ async def update_contribution_endpoint(
         message=f"Update annotations on {contribution_id} — {user.login}",
         author_name=user.login,
     )
+    response.headers["ETag"] = f'"{new_version}"'
     return ContributionResponse(
         id=contribution_id,
         message="Contribution updated successfully",
+        version=new_version,
     )
 
 
@@ -576,14 +628,27 @@ async def update_contribution_endpoint(
 async def relabel_neume_endpoint(
     contribution_id: str,
     body: NeumeRelabel,
+    response: Response,
     user: User = Depends(require_user),
+    if_match: str | None = Header(default=None, alias="If-Match"),
 ):
     """Relabel a single neume in a contribution by matching its bounding box."""
+    expected_version = _parse_if_match(if_match)
     try:
-        relabel_neume(
+        new_version = relabel_neume(
             contribution_id,
             bbox=body.bbox.model_dump(),
             new_type=body.new_type,
+            expected_version=expected_version,
+        )
+    except VersionConflictError as e:
+        raise HTTPException(
+            status_code=412,
+            detail=(
+                "Contribution was modified by someone else since you loaded it. "
+                "Reload to see the latest version before relabeling again."
+            ),
+            headers={"ETag": f'"{e.actual}"'},
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -594,9 +659,11 @@ async def relabel_neume_endpoint(
         message=f"Relabel neume in {contribution_id} to {body.new_type} — {user.login}",
         author_name=user.login,
     )
+    response.headers["ETag"] = f'"{new_version}"'
     return ContributionResponse(
         id=contribution_id,
         message="Neume relabeled successfully",
+        version=new_version,
     )
 
 
