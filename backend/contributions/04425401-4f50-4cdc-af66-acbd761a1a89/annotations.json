@@ -9793,6 +9793,24 @@
         "width": 45,
         "height": 39
       }
+    },
+    {
+      "type": "celeriter",
+      "bbox": {
+        "x": 606,
+        "y": 1441,
+        "width": 17,
+        "height": 18
+      }
+    },
+    {
+      "type": "punctum",
+      "bbox": {
+        "x": 889,
+        "y": 1649,
+        "width": 17,
+        "height": 10
+      }
     }
   ]
 }
