@@ -310,3 +310,8 @@ classes:
   name: Bivirga episemata subbipunctis
   description: Birvirga with episema followed by two descending notes
   active: true
+- id: 62
+  key: pes episematus subbipunctis
+  name: Pes episematus subbipunctis
+  description: Pes with episema followed by two descending notes
+  active: true
