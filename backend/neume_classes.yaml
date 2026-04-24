@@ -331,3 +331,8 @@ classes:
   name: Torculus resupinus flexus
   description: 'Five notes:  low-high-low-high-low'
   active: true
+- id: 66
+  key: salicus episematus
+  name: Salicus episematus
+  description: Salicus with episema
+  active: true
