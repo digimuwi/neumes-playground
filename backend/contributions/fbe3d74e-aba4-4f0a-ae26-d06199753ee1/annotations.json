@@ -11812,7 +11812,7 @@
       }
     },
     {
-      "type": "unknown",
+      "type": "equaliter",
       "bbox": {
         "x": 1599,
         "y": 2802,
