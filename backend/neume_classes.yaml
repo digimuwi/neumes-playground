@@ -269,3 +269,9 @@ classes:
   name: Tractulus cum episema
   description: single note (dash) with
   active: true
+- id: 54
+  key: quilismapes cum episema subbipunctis
+  name: Quilismapes cum episema subbipunctis
+  description: Two notes ascending, first with quilisma, second with episema, two
+    notes descending
+  active: true
