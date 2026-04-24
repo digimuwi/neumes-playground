@@ -336,3 +336,8 @@ classes:
   name: Salicus episematus
   description: Salicus with episema
   active: true
+- id: 67
+  key: salicus liquescens
+  name: Salicus liquescens
+  description: Salicus with liquescence
+  active: true
