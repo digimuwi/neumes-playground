@@ -300,3 +300,8 @@ classes:
   name: Pressus maior
   description: 'Three notes: first and second same, third descending'
   active: true
+- id: 60
+  key: virga strata
+  name: Virga strata
+  description: Two same notes, second oriscus
+  active: true
