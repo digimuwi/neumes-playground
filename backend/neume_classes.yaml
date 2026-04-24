@@ -290,3 +290,8 @@ classes:
   name: Quilismapes subbipunctis
   description: Pes, first note quilisma, followed by two descending puncta
   active: true
+- id: 58
+  key: pressus minor
+  name: Pressus minor
+  description: 'Two notes: First same as note before, second descending'
+  active: true
