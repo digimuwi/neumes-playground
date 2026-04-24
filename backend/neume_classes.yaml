@@ -295,3 +295,8 @@ classes:
   name: Pressus minor
   description: 'Two notes: First same as note before, second descending'
   active: true
+- id: 59
+  key: pressus maior
+  name: Pressus maior
+  description: 'Three notes: first and second same, third descending'
+  active: true
