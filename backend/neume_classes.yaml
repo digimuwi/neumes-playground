@@ -275,3 +275,8 @@ classes:
   description: Two notes ascending, first with quilisma, second with episema, two
     notes descending
   active: true
+- id: 55
+  key: quilismatorculus
+  name: Quilismatorculus
+  description: 'Three notes: low-high-low, first quilisma'
+  active: true
