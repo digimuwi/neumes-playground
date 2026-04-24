@@ -320,3 +320,9 @@ classes:
   name: Virga liquescens
   description: Two notes descending, second liquescent
   active: true
+- id: 64
+  key: clivis pressus minor
+  name: Clivis pressus minor
+  description: 'Four notes: First two descending, third same as second with oriscus,
+    fourth descending'
+  active: true
