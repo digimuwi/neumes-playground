@@ -285,3 +285,8 @@ classes:
   name: Quilismatorculus cum episema
   description: 'Three notes: low-high-low, first quilisma, with episema'
   active: true
+- id: 57
+  key: quilismapes subbipunctis
+  name: Quilismapes subbipunctis
+  description: Pes, first note quilisma, followed by two descending puncta
+  active: true
