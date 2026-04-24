@@ -417,7 +417,7 @@
       }
     },
     {
-      "type": "expectate",
+      "type": "equaliter",
       "bbox": {
         "x": 699,
         "y": 39,
