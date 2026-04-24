@@ -341,3 +341,8 @@ classes:
   name: Salicus liquescens
   description: Salicus with liquescence
   active: true
+- id: 68
+  key: salicus subbipunctis
+  name: Salicus subbipunctis
+  description: Salicus followed by two descending notes
+  active: true
