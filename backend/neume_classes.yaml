@@ -305,3 +305,8 @@ classes:
   name: Virga strata
   description: Two same notes, second oriscus
   active: true
+- id: 61
+  key: bivirga episemata subbipunctis
+  name: Bivirga episemata subbipunctis
+  description: Birvirga with episema followed by two descending notes
+  active: true
