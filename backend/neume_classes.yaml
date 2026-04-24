@@ -315,3 +315,8 @@ classes:
   name: Pes episematus subbipunctis
   description: Pes with episema followed by two descending notes
   active: true
+- id: 63
+  key: virga liquescens
+  name: Virga liquescens
+  description: Two notes descending, second liquescent
+  active: true
