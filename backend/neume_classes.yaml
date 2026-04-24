@@ -280,3 +280,8 @@ classes:
   name: Quilismatorculus
   description: 'Three notes: low-high-low, first quilisma'
   active: true
+- id: 56
+  key: quilismatorculus cum episema
+  name: Quilismatorculus cum episema
+  description: 'Three notes: low-high-low, first quilisma, with episema'
+  active: true
