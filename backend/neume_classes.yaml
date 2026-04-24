@@ -326,3 +326,8 @@ classes:
   description: 'Four notes: First two descending, third same as second with oriscus,
     fourth descending'
   active: true
+- id: 65
+  key: torculus resupinus flexus
+  name: Torculus resupinus flexus
+  description: 'Five notes:  low-high-low-high-low'
+  active: true
