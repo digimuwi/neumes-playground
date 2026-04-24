@@ -346,3 +346,8 @@ classes:
   name: Salicus subbipunctis
   description: Salicus followed by two descending notes
   active: true
+- id: 69
+  key: statim
+  name: statim
+  description: ''
+  active: true
