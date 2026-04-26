@@ -366,3 +366,8 @@ classes:
   name: Porrectus cum episema
   description: Porrectus with episema
   active: true
+- id: 73
+  key: quilisma cum episema
+  name: Quilisma cum episema
+  description: Quilisam with episema
+  active: true
