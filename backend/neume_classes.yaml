@@ -371,3 +371,8 @@ classes:
   name: Quilisma cum episema
   description: Quilisam with episema
   active: true
+- id: 74
+  key: torculus resupinus cum episema
+  name: Torculus resupinus cum episema
+  description: Torculus resupinus cum episema
+  active: true
