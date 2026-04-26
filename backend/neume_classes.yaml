@@ -361,3 +361,8 @@ classes:
   name: Scandicus cum episema
   description: Scandicus with episema
   active: true
+- id: 72
+  key: porrectus cum episema
+  name: Porrectus cum episema
+  description: Porrectus with episema
+  active: true
