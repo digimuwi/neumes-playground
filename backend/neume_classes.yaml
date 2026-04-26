@@ -351,3 +351,8 @@ classes:
   name: statim
   description: ''
   active: true
+- id: 70
+  key: torculus cum episema
+  name: Torculus cum episema
+  description: Torculus with episema
+  active: true
