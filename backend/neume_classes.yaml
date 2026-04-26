@@ -356,3 +356,8 @@ classes:
   name: Torculus cum episema
   description: Torculus with episema
   active: true
+- id: 71
+  key: scandicus cum episema
+  name: Scandicus cum episema
+  description: Scandicus with episema
+  active: true
