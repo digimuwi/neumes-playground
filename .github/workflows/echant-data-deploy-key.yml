@@ -15,11 +15,12 @@ on:
   workflow_dispatch:
     inputs:
       stage:
-        description: read-key or switch-remote
+        description: which stage to run
         required: true
         type: choice
         options:
           - read-key
+          - generate-echant-key
           - switch-remote
 
 concurrency:
@@ -71,7 +72,28 @@ jobs:
               exit 0
             fi
 
+            if [ "$STAGE" = "generate-echant-key" ]; then
+              KEY=/root/.ssh/echant_deploy_key
+              if [ ! -f "$KEY" ]; then
+                ssh-keygen -t ed25519 -N "" -C "root@neumes-playground (echant-data)" -f "$KEY"
+                echo "Generated new ed25519 keypair at $KEY"
+              else
+                echo "Keypair already exists at $KEY"
+              fi
+              echo ""
+              echo "=== Public key (register this as a deploy key on echant-data) ==="
+              cat "${KEY}.pub"
+              echo "============================================================="
+              exit 0
+            fi
+
             if [ "$STAGE" = "switch-remote" ]; then
+              KEY=/root/.ssh/echant_deploy_key
+              if [ ! -f "$KEY" ]; then
+                echo "FAIL: $KEY does not exist — run stage=generate-echant-key first"
+                exit 1
+              fi
+
               echo "=== Current remote ==="
               git -C "$DATA_DIR" remote -v
 
@@ -79,12 +101,16 @@ jobs:
               git -C "$DATA_DIR" remote set-url origin git@github.com:digimuwi/echant-data.git
               git -C "$DATA_DIR" remote -v
 
+              echo "=== Setting per-repo core.sshCommand to use the dedicated echant key ==="
+              git -C "$DATA_DIR" config core.sshCommand "ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+              git -C "$DATA_DIR" config --get core.sshCommand
+
               echo "=== ssh-keyscan github.com (ensures known_hosts) ==="
               mkdir -p ~/.ssh
               ssh-keyscan -t rsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
               sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
 
-              echo "=== Test fetch over SSH ==="
+              echo "=== Test fetch over SSH (using dedicated key) ==="
               git -C "$DATA_DIR" fetch origin
 
               echo "=== Test push --dry-run ==="
