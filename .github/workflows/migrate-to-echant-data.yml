@@ -1,0 +1,108 @@
+name: One-shot migration to echant-data
+
+# Switches the production backend to read/write contributions from
+# /var/lib/echant-data (a clone of digimuwi/echant-data) instead of
+# /opt/neumes-playground/backend/contributions.
+#
+# Idempotent: safe to re-run. Reverts to the previous state if any
+# verification step fails.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: migrate-data-repo
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and migrate
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -euo pipefail
+
+            DATA_DIR=/var/lib/echant-data
+            UNIT=neumes-backend
+            DROPIN_DIR=/etc/systemd/system/${UNIT}.service.d
+            DROPIN_FILE=${DROPIN_DIR}/data-repo.conf
+            BACKUP_FILE=${DROPIN_DIR}/data-repo.conf.bak.$(date +%s)
+            EXPECTED_COUNT=12
+
+            echo "=== Step 1: Clone echant-data (if absent) ==="
+            if [ ! -d "$DATA_DIR/.git" ]; then
+              git clone https://github.com/digimuwi/echant-data.git "$DATA_DIR"
+            else
+              echo "Already cloned, pulling latest"
+              cd "$DATA_DIR"
+              git pull --rebase origin main
+            fi
+
+            echo "=== Step 2: Verify data integrity ==="
+            COUNT=$(find "$DATA_DIR/contributions" -mindepth 1 -maxdepth 1 -type d | wc -l)
+            if [ "$COUNT" -lt "$EXPECTED_COUNT" ]; then
+              echo "FAIL: expected at least $EXPECTED_COUNT contributions, got $COUNT"
+              exit 1
+            fi
+            echo "Found $COUNT contributions in $DATA_DIR/contributions"
+
+            echo "=== Step 3: Write systemd drop-in (with backup) ==="
+            mkdir -p "$DROPIN_DIR"
+            if [ -f "$DROPIN_FILE" ]; then
+              cp "$DROPIN_FILE" "$BACKUP_FILE"
+              echo "Backed up existing drop-in to $BACKUP_FILE"
+            fi
+            cat > "$DROPIN_FILE" <<'EOF'
+            [Service]
+            Environment="DATA_REPO_ROOT=/var/lib/echant-data"
+            EOF
+            systemctl daemon-reload
+
+            echo "=== Step 4: Restart backend ==="
+            systemctl restart "$UNIT"
+            sleep 8
+
+            echo "=== Step 5: Verify ==="
+            if ! curl -sf --retry 3 --retry-delay 2 http://127.0.0.1:8000/health; then
+              echo "FAIL: /health did not respond"
+              echo "--- Recent backend logs ---"
+              journalctl -u "$UNIT" -n 30 --no-pager
+              echo "--- Rolling back ---"
+              if [ -f "$BACKUP_FILE" ]; then
+                mv "$BACKUP_FILE" "$DROPIN_FILE"
+              else
+                rm -f "$DROPIN_FILE"
+              fi
+              systemctl daemon-reload
+              systemctl restart "$UNIT"
+              exit 1
+            fi
+
+            COUNT_API=$(curl -s http://127.0.0.1:8000/contributions | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
+            if [ "$COUNT_API" -lt "$EXPECTED_COUNT" ]; then
+              echo "FAIL: API reports $COUNT_API contributions, expected at least $EXPECTED_COUNT"
+              echo "--- Recent backend logs ---"
+              journalctl -u "$UNIT" -n 30 --no-pager
+              echo "--- Rolling back ---"
+              if [ -f "$BACKUP_FILE" ]; then
+                mv "$BACKUP_FILE" "$DROPIN_FILE"
+              else
+                rm -f "$DROPIN_FILE"
+              fi
+              systemctl daemon-reload
+              systemctl restart "$UNIT"
+              exit 1
+            fi
+
+            echo ""
+            echo "=== SUCCESS ==="
+            echo "Backend now serves $COUNT_API contributions from $DATA_DIR"
+            echo "Drop-in: $DROPIN_FILE"
+            if [ -f "$BACKUP_FILE" ]; then
+              echo "Previous drop-in backed up at: $BACKUP_FILE"
+            fi
