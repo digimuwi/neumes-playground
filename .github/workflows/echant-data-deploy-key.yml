@@ -1,0 +1,91 @@
+name: echant-data deploy-key setup
+
+# Two-stage helper for granting the production backend push access to
+# digimuwi/echant-data:
+#
+#   stage=read-key  → dump the server's SSH pubkey + current remote
+#                     (so we can register it as a deploy key)
+#   stage=switch-remote → flip /var/lib/echant-data origin to SSH and
+#                     verify push works (dry-run + a no-op real push)
+#
+# This is a one-time setup; remove the workflow file after the second
+# stage succeeds.
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: read-key or switch-remote
+        required: true
+        type: choice
+        options:
+          - read-key
+          - switch-remote
+
+concurrency:
+  group: echant-data-deploy-key
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and run requested stage
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          capture_stdout: true
+          script: |
+            set -euo pipefail
+            STAGE="${{ inputs.stage }}"
+            DATA_DIR=/var/lib/echant-data
+
+            if [ "$STAGE" = "read-key" ]; then
+              echo "=== /var/lib/echant-data origin ==="
+              git -C "$DATA_DIR" remote -v
+              echo ""
+              echo "=== /opt/neumes-playground origin (for reference) ==="
+              git -C /opt/neumes-playground remote -v
+              echo ""
+              echo "=== Public SSH keys on this server ==="
+              for k in /root/.ssh/id_*.pub; do
+                [ -f "$k" ] || continue
+                echo "--- $k ---"
+                cat "$k"
+              done
+              # Also dump default agent keys
+              if [ -n "${SSH_AUTH_SOCK:-}" ]; then
+                echo "=== ssh-agent keys ==="
+                ssh-add -L 2>/dev/null || echo "(no agent or no keys)"
+              fi
+              exit 0
+            fi
+
+            if [ "$STAGE" = "switch-remote" ]; then
+              echo "=== Current remote ==="
+              git -C "$DATA_DIR" remote -v
+
+              echo "=== Switching origin to SSH ==="
+              git -C "$DATA_DIR" remote set-url origin git@github.com:digimuwi/echant-data.git
+              git -C "$DATA_DIR" remote -v
+
+              echo "=== ssh-keyscan github.com (ensures known_hosts) ==="
+              mkdir -p ~/.ssh
+              ssh-keyscan -t rsa,ed25519 github.com >> ~/.ssh/known_hosts 2>/dev/null
+              sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
+
+              echo "=== Test fetch over SSH ==="
+              git -C "$DATA_DIR" fetch origin
+
+              echo "=== Test push --dry-run ==="
+              git -C "$DATA_DIR" push --dry-run origin main
+
+              echo ""
+              echo "=== SUCCESS — push auth works ==="
+              exit 0
+            fi
+
+            echo "Unknown stage: $STAGE"
+            exit 1
