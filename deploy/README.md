@@ -20,9 +20,11 @@ cd neumes-playground/deploy
 cp .env.example .env
 # Edit .env — fill in all values
 
-# 4. Clone the data repo for git-backed storage
-git clone git@github.com:digimuwi/neumes-playground.git /var/lib/neumes-data
-# Ensure the deploy key can push to this repo
+# 4. Clone the data repo (echant-data) for git-backed storage
+git clone git@github.com:digimuwi/echant-data.git /var/lib/echant-data
+# Ensure the deploy key can push to digimuwi/echant-data
+# Set DATA_REPO_ROOT=/var/lib/echant-data in the backend's environment
+# (systemd: /etc/systemd/system/neumes-backend.service.d/data-repo.conf)
 
 # 5. Start everything
 docker compose up -d --build
