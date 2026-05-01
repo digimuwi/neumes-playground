@@ -9,6 +9,7 @@ import base64
 import hashlib
 import logging
 import mimetypes
+import os
 import threading
 import uuid
 from pathlib import Path
@@ -19,8 +20,14 @@ from .mei_io import ContributionDocument
 
 logger = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).parent.parent.parent.parent
-CONTRIBUTIONS_DIR = BASE_DIR / "contributions"
+# When DATA_REPO_ROOT is set, contributions live in a separate data repo
+# (e.g., echant-data cloned to /var/lib/echant-data on the server). Otherwise
+# we fall back to backend/contributions/ for local development.
+_BACKEND_DIR = Path(__file__).parent.parent.parent.parent
+_DATA_ROOT_ENV = os.getenv("DATA_REPO_ROOT")
+_DATA_ROOT = Path(_DATA_ROOT_ENV).resolve() if _DATA_ROOT_ENV else _BACKEND_DIR
+
+CONTRIBUTIONS_DIR = _DATA_ROOT / "contributions"
 
 ANNOTATIONS_FILENAME = "annotations.mei"
 
