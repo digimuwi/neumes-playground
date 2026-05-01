@@ -14,7 +14,7 @@ import shutil
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, ElementTree, indent
 
-from ..contribution.storage import list_contributions
+from ..contribution.storage import list_contributions, read_document
 
 logger = logging.getLogger(__name__)
 
@@ -310,14 +310,16 @@ def export_contribution(
 
     Returns True if export succeeded, False if skipped.
     """
-    annotations_path = contribution_path / "annotations.json"
-    data = json.loads(annotations_path.read_text(encoding="utf-8"))
-
-    lines = data.get("lines", [])
-    neumes = data.get("neumes", [])
-    image_meta = data.get("image", {})
-    image_width = image_meta.get("width", 0)
-    image_height = image_meta.get("height", 0)
+    doc = read_document(contribution_path)
+    lines = [line.model_dump() for line in doc.lines]
+    neumes = [neume.model_dump() for neume in doc.neumes]
+    image_width = doc.image.width
+    image_height = doc.image.height
+    image_meta = {
+        "filename": doc.image.filename,
+        "width": image_width,
+        "height": image_height,
+    }
 
     if not lines:
         logger.info("Skipping %s: no lines", contribution_id)

@@ -224,20 +224,37 @@ def restore_file(backup_path: Path) -> str:
     image_filename = f"image.{ext}"
     img.save(contribution_dir / image_filename, format=img_format)
 
-    # Save annotations
-    annotations_data = {
-        "image": {
-            "filename": image_filename,
-            "width": img_width,
-            "height": img_height,
-        },
-        "lines": contrib_lines,
-        "neumes": contrib_neumes,
-    }
-
-    (contribution_dir / "annotations.json").write_text(
-        json.dumps(annotations_data, indent=2), encoding="utf-8"
+    # Save annotations as canonical MEI
+    from htr_service.contribution import mei_io
+    from htr_service.contribution.mei_io import ContributionDocument
+    from htr_service.models.types import (
+        ImageMetadata,
+        LineInput,
+        NeumeInput,
+        SyllableInput,
+        BBox,
     )
+
+    doc = ContributionDocument(
+        image=ImageMetadata(
+            filename=image_filename, width=img_width, height=img_height
+        ),
+        lines=[
+            LineInput(
+                boundary=line["boundary"],
+                syllables=[
+                    SyllableInput(text=s["text"], boundary=s["boundary"])
+                    for s in line["syllables"]
+                ],
+            )
+            for line in contrib_lines
+        ],
+        neumes=[
+            NeumeInput(type=n["type"], bbox=BBox(**n["bbox"]))
+            for n in contrib_neumes
+        ],
+    )
+    (contribution_dir / "annotations.mei").write_bytes(mei_io.write_contribution(doc))
 
     return contribution_id
 

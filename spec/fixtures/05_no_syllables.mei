@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="200" lry="200" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="200px" target="image.jpg" width="200px"/>
+        <zone lrx="200" lry="200" points="0,0 200,0 200,200 0,200" ulx="0" uly="0" xml:id="zone-line-1"/>
+        <zone lrx="50" lry="80" points="20,60 50,60 50,80 20,80" ulx="20" uly="60" xml:id="zone-n-ffffffff-0001-0000-0000-000000000001"/>
+        <zone lrx="120" lry="80" points="80,60 120,60 120,80 80,80" ulx="80" uly="60" xml:id="zone-n-ffffffff-0001-0000-0000-000000000002"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-line-1" xml:id="syl-orphan-1">
+                  <syl/>
+                  <neume facs="#zone-n-ffffffff-0001-0000-0000-000000000001" type="punctum" xml:id="n-ffffffff-0001-0000-0000-000000000001"/>
+                  <neume facs="#zone-n-ffffffff-0001-0000-0000-000000000002" type="clivis" xml:id="n-ffffffff-0001-0000-0000-000000000002"/>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

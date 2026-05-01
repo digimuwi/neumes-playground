@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="300" lry="150" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="150px" target="image.jpg" width="300px"/>
+        <zone lrx="220" lry="80" points="10,50 220,50 220,80 10,80" ulx="10" uly="50" xml:id="zone-line-1"/>
+        <zone lrx="80" lry="80" points="10,50 80,50 80,80 10,80" ulx="10" uly="50" xml:id="zone-syl-eeeeeeee-0001-0000-0000-000000000001"/>
+        <zone lrx="160" lry="80" points="100,50 160,50 160,80 100,80" ulx="100" uly="50" xml:id="zone-syl-eeeeeeee-0001-0000-0000-000000000002"/>
+        <zone lrx="220" lry="80" points="180,50 220,50 220,80 180,80" ulx="180" uly="50" xml:id="zone-syl-eeeeeeee-0001-0000-0000-000000000003"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-syl-eeeeeeee-0001-0000-0000-000000000001" xml:id="syl-eeeeeeee-0001-0000-0000-000000000001">
+                  <syl wordpos="i">Pa</syl>
+                </syllable>
+                <syllable facs="#zone-syl-eeeeeeee-0001-0000-0000-000000000002" xml:id="syl-eeeeeeee-0001-0000-0000-000000000002">
+                  <syl wordpos="m">ter</syl>
+                </syllable>
+                <syllable facs="#zone-syl-eeeeeeee-0001-0000-0000-000000000003" xml:id="syl-eeeeeeee-0001-0000-0000-000000000003">
+                  <syl wordpos="t">noster</syl>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

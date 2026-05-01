@@ -8,7 +8,7 @@ from typing import Generator, Optional
 
 logger = logging.getLogger(__name__)
 
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from PIL import Image
@@ -17,7 +17,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import auth as auth_module
 from . import storage_git
 from .auth import User, require_user
-from .contribution.storage import CONTRIBUTIONS_DIR
+from .contribution.storage import ANNOTATIONS_FILENAME, CONTRIBUTIONS_DIR
 from .neume_registry import DEFAULT_CLASSES_PATH
 from .models.types import (
     BBox,
@@ -42,9 +42,12 @@ from .contribution import (
     VersionConflictError,
     find_image_file,
     get_contribution,
+    read_document,
     relabel_neume,
     save_contribution,
+    save_contribution_from_mei,
     update_contribution_annotations,
+    update_contribution_from_mei,
 )
 from .contribution.storage import list_contributions
 from .cors import build_cors_options
@@ -441,13 +444,17 @@ async def update_neume_class_endpoint(
 
 
 class AnnotationsParseError(Exception):
-    """Raised when annotations JSON is invalid."""
+    """Raised when annotation payload is invalid."""
 
     pass
 
 
-def _parse_annotations(annotations_json: str) -> ContributionAnnotations:
-    """Parse annotations JSON string to ContributionAnnotations model."""
+def _looks_like_xml(s: str) -> bool:
+    return s.lstrip().startswith("<")
+
+
+def _parse_annotations_legacy_json(annotations_json: str) -> ContributionAnnotations:
+    """Parse legacy JSON annotation payload to ContributionAnnotations model."""
     try:
         data = json.loads(annotations_json)
         return ContributionAnnotations(**data)
@@ -460,30 +467,31 @@ def _parse_annotations(annotations_json: str) -> ContributionAnnotations:
 @app.post("/contribute", status_code=201, response_model=ContributionResponse)
 async def contribute(
     image: UploadFile = File(..., description="Image file (JPEG or PNG)"),
-    annotations: str = Form(..., description="Annotations JSON with lines and neumes"),
+    mei: Optional[str] = Form(None, description="MEI 5.0 XML annotations"),
+    annotations: Optional[str] = Form(
+        None, description="(Legacy) JSON annotations with lines and neumes"
+    ),
     user: User = Depends(require_user),
 ):
     """Contribute training data for neume detection model training.
 
-    Accepts an image and annotation data with polygon boundaries,
-    and stores in the contributions directory for later training use.
-
-    Args:
-        image: The manuscript image file
-        annotations: JSON string with structure:
-            {
-                "lines": [{"boundary": [[x,y],...], "syllables": [{"text": "...", "boundary": [[x,y],...]}]}],
-                "neumes": [{"type": "...", "bbox": {...}}]
-            }
-
-    Returns:
-        ContributionResponse with the contribution ID
+    Accepts an image and annotation data. The preferred form field is
+    `mei` (MEI 5.0 XML). The legacy `annotations` JSON field is still
+    accepted during the migration window.
     """
-    # Parse and validate annotations
-    try:
-        parsed_annotations = _parse_annotations(annotations)
-    except AnnotationsParseError as e:
-        raise HTTPException(status_code=422, detail=str(e))
+    # Pick whichever form field is present
+    if mei is None and annotations is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Either 'mei' or 'annotations' form field is required",
+        )
+
+    # If 'annotations' looks like XML, treat it as MEI (the FE may rename mid-deploy)
+    raw_payload = mei if mei is not None else annotations
+    if raw_payload is None:
+        raise HTTPException(status_code=422, detail="Empty annotations payload")
+
+    payload_is_mei = mei is not None or _looks_like_xml(raw_payload)
 
     # Load image to get dimensions
     try:
@@ -493,15 +501,30 @@ async def contribute(
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Invalid image file: {e}")
 
-    # Save contribution
-    contribution_id, contribution_dir = save_contribution(
-        image_bytes=image_bytes,
-        annotations=parsed_annotations,
-        image_width=image_width,
-        image_height=image_height,
-        content_type=image.content_type,
-        original_filename=image.filename,
-    )
+    try:
+        if payload_is_mei:
+            contribution_id, contribution_dir = save_contribution_from_mei(
+                image_bytes=image_bytes,
+                mei_bytes=raw_payload.encode("utf-8"),
+                image_width=image_width,
+                image_height=image_height,
+                content_type=image.content_type,
+                original_filename=image.filename,
+            )
+        else:
+            parsed = _parse_annotations_legacy_json(raw_payload)
+            contribution_id, contribution_dir = save_contribution(
+                image_bytes=image_bytes,
+                annotations=parsed,
+                image_width=image_width,
+                image_height=image_height,
+                content_type=image.content_type,
+                original_filename=image.filename,
+            )
+    except AnnotationsParseError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=f"Invalid MEI: {e}")
 
     image_name = image.filename or "image"
     storage_git.commit_paths(
@@ -523,27 +546,21 @@ async def list_contributions_endpoint():
     summaries = []
     for contribution_id, contribution_path in contributions:
         try:
-            annotations_data = json.loads(
-                (contribution_path / "annotations.json").read_text(encoding="utf-8")
-            )
-            image_meta = annotations_data.get("image", {})
-            lines = annotations_data.get("lines", [])
-            neumes = annotations_data.get("neumes", [])
-            syllable_count = sum(
-                len(line.get("syllables", [])) for line in lines
-            )
+            doc = read_document(contribution_path)
+            syllable_count = sum(len(line.syllables) for line in doc.lines)
             summaries.append(ContributionSummary(
                 id=contribution_id,
                 image=ImageMetadata(
-                    filename=image_meta.get("filename", ""),
-                    width=image_meta.get("width", 0),
-                    height=image_meta.get("height", 0),
+                    filename=doc.image.filename,
+                    width=doc.image.width,
+                    height=doc.image.height,
                 ),
-                line_count=len(lines),
+                line_count=len(doc.lines),
                 syllable_count=syllable_count,
-                neume_count=len(neumes),
+                neume_count=len(doc.neumes),
             ))
         except Exception:
+            logger.exception("Failed to summarize contribution %s", contribution_id)
             continue
     return summaries
 
@@ -578,26 +595,66 @@ async def get_contribution_endpoint(contribution_id: str, response: Response):
 @app.put("/contributions/{contribution_id}", response_model=ContributionResponse)
 async def update_contribution_endpoint(
     contribution_id: str,
-    annotations: ContributionAnnotations,
+    request: Request,
     response: Response,
     user: User = Depends(require_user),
     if_match: str | None = Header(default=None, alias="If-Match"),
 ):
     """Update annotations for an existing contribution.
 
+    Body may be:
+      - Raw MEI XML (Content-Type: text/xml or application/xml)
+      - JSON `{"mei": "<?xml..."}` (Content-Type: application/json)
+      - Legacy JSON ContributionAnnotations (Content-Type: application/json)
+
     Send the ETag from the last GET as `If-Match` to prevent overwriting
     concurrent edits; returns 412 on mismatch.
     """
+    # Validate UUID up-front so invalid IDs return 404, not 422
+    import uuid as _uuid
+    try:
+        _uuid.UUID(contribution_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Contribution not found")
+
     expected_version = _parse_if_match(if_match)
     if expected_version is None:
         logger.warning(
             "PUT /contributions/%s from %s without If-Match — concurrent edits may be lost",
             contribution_id, user.login,
         )
+
+    body = await request.body()
+    content_type = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+
     try:
-        new_version = update_contribution_annotations(
-            contribution_id, annotations, expected_version=expected_version,
-        )
+        if content_type in ("text/xml", "application/xml") or _looks_like_xml(
+            body.decode("utf-8", errors="replace")
+        ):
+            new_version = update_contribution_from_mei(
+                contribution_id, body, expected_version=expected_version
+            )
+        else:
+            # JSON body — sniff for {mei: ...} envelope vs legacy ContributionAnnotations
+            try:
+                data = json.loads(body)
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=422, detail=f"Invalid JSON: {e}")
+
+            if isinstance(data, dict) and "mei" in data and isinstance(data["mei"], str):
+                new_version = update_contribution_from_mei(
+                    contribution_id,
+                    data["mei"].encode("utf-8"),
+                    expected_version=expected_version,
+                )
+            else:
+                try:
+                    parsed = ContributionAnnotations(**data)
+                except Exception as e:
+                    raise HTTPException(status_code=422, detail=f"Invalid annotations: {e}")
+                new_version = update_contribution_annotations(
+                    contribution_id, parsed, expected_version=expected_version
+                )
     except VersionConflictError as e:
         raise HTTPException(
             status_code=412,
@@ -607,12 +664,13 @@ async def update_contribution_endpoint(
             ),
             headers={"ETag": f'"{e.actual}"'},
         )
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Contribution not found")
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=f"Invalid MEI: {e}")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Contribution not found")
+
     storage_git.commit_paths(
-        [CONTRIBUTIONS_DIR / contribution_id / "annotations.json"],
+        [CONTRIBUTIONS_DIR / contribution_id / ANNOTATIONS_FILENAME],
         message=f"Update annotations on {contribution_id} — {user.login}",
         author_name=user.login,
     )
@@ -655,7 +713,7 @@ async def relabel_neume_endpoint(
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Contribution not found")
     storage_git.commit_paths(
-        [CONTRIBUTIONS_DIR / contribution_id / "annotations.json"],
+        [CONTRIBUTIONS_DIR / contribution_id / ANNOTATIONS_FILENAME],
         message=f"Relabel neume in {contribution_id} to {body.new_type} — {user.login}",
         author_name=user.login,
     )
@@ -683,15 +741,11 @@ async def list_neumes(
 
     for contribution_id, contribution_path in list_contributions():
         try:
-            annotations_data = json.loads(
-                (contribution_path / "annotations.json").read_text(encoding="utf-8")
-            )
-            neumes = annotations_data.get("neumes", [])
-            if not neumes:
+            doc = read_document(contribution_path)
+            if not doc.neumes:
                 continue
 
-            # Only load the image if there are matching neumes
-            matching = [n for n in neumes if type is None or n.get("type") == type]
+            matching = [n for n in doc.neumes if type is None or n.type == type]
             if not matching:
                 continue
 
@@ -703,21 +757,17 @@ async def list_neumes(
             mime = mimetypes.guess_type(image_path.name)[0] or "image/jpeg"
 
             for neume in matching:
-                bbox = neume["bbox"]
-                x, y, w, h = bbox["x"], bbox["y"], bbox["width"], bbox["height"]
-
-                # Clamp to image bounds
-                x = max(0, x)
-                y = max(0, y)
-                right = min(img.width, x + w)
-                bottom = min(img.height, y + h)
+                bbox = neume.bbox
+                x = max(0, bbox.x)
+                y = max(0, bbox.y)
+                right = min(img.width, bbox.x + bbox.width)
+                bottom = min(img.height, bbox.y + bbox.height)
 
                 if right <= x or bottom <= y:
                     continue
 
                 crop = img.crop((x, y, right, bottom))
 
-                # Encode crop as data URL
                 buf = io.BytesIO()
                 fmt = "PNG" if "png" in mime else "JPEG"
                 crop.save(buf, format=fmt)
@@ -725,12 +775,13 @@ async def list_neumes(
                 crop_data_url = f"data:{mime};base64,{b64}"
 
                 crops.append(NeumeCrop(
-                    type=neume.get("type", ""),
+                    type=neume.type,
                     contribution_id=contribution_id,
                     bbox=BBox(x=x, y=y, width=right - x, height=bottom - y),
                     crop_data_url=crop_data_url,
                 ))
         except Exception:
+            logger.exception("Failed to crop neumes for %s", contribution_id)
             continue
 
     return crops

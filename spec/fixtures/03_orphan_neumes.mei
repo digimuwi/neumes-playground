@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="300" lry="200" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="200px" target="image.jpg" width="300px"/>
+        <zone lrx="280" lry="125" points="20,100 280,100 280,125 20,125" ulx="20" uly="100" xml:id="zone-line-1"/>
+        <zone lrx="80" lry="125" points="20,100 80,100 80,125 20,125" ulx="20" uly="100" xml:id="zone-syl-cccccccc-0001-0000-0000-000000000001"/>
+        <zone lrx="60" lry="95" points="30,80 60,80 60,95 30,95" ulx="30" uly="80" xml:id="zone-n-dddddddd-0001-0000-0000-000000000001"/>
+        <zone lrx="180" lry="95" points="150,80 180,80 180,95 150,95" ulx="150" uly="80" xml:id="zone-n-dddddddd-0001-0000-0000-000000000002"/>
+        <zone lrx="260" lry="95" points="230,80 260,80 260,95 230,95" ulx="230" uly="80" xml:id="zone-n-dddddddd-0001-0000-0000-000000000003"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-syl-cccccccc-0001-0000-0000-000000000001" xml:id="syl-cccccccc-0001-0000-0000-000000000001">
+                  <syl wordpos="s">Te</syl>
+                  <neume facs="#zone-n-dddddddd-0001-0000-0000-000000000001" type="punctum" xml:id="n-dddddddd-0001-0000-0000-000000000001"/>
+                </syllable>
+                <syllable facs="#zone-line-1" xml:id="syl-orphan-1">
+                  <syl/>
+                  <neume facs="#zone-n-dddddddd-0001-0000-0000-000000000002" type="clivis" xml:id="n-dddddddd-0001-0000-0000-000000000002"/>
+                  <neume facs="#zone-n-dddddddd-0001-0000-0000-000000000003" type="virga" xml:id="n-dddddddd-0001-0000-0000-000000000003"/>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

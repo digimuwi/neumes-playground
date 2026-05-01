@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="400" lry="300" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="300px" target="image.jpg" width="400px"/>
+        <zone lrx="380" lry="125" points="10,100 380,100 380,125 10,125" ulx="10" uly="100" xml:id="zone-line-1"/>
+        <zone lrx="380" lry="225" points="10,200 380,200 380,225 10,225" ulx="10" uly="200" xml:id="zone-line-2"/>
+        <zone lrx="60" lry="125" points="10,100 60,100 60,125 10,125" ulx="10" uly="100" xml:id="zone-syl-aaaaaaaa-0001-0000-0000-000000000001"/>
+        <zone lrx="180" lry="125" points="80,100 180,100 180,125 80,125" ulx="80" uly="100" xml:id="zone-syl-aaaaaaaa-0001-0000-0000-000000000002"/>
+        <zone lrx="280" lry="125" points="200,100 280,100 280,125 200,125" ulx="200" uly="100" xml:id="zone-syl-aaaaaaaa-0001-0000-0000-000000000003"/>
+        <zone lrx="120" lry="225" points="10,200 120,200 120,225 10,225" ulx="10" uly="200" xml:id="zone-syl-aaaaaaaa-0002-0000-0000-000000000001"/>
+        <zone lrx="280" lry="225" points="140,200 280,200 280,225 140,225" ulx="140" uly="200" xml:id="zone-syl-aaaaaaaa-0002-0000-0000-000000000002"/>
+        <zone lrx="50" lry="95" points="20,80 50,80 50,95 20,95" ulx="20" uly="80" xml:id="zone-n-bbbbbbbb-0001-0000-0000-000000000001"/>
+        <zone lrx="170" lry="95" points="100,80 170,80 170,95 100,95" ulx="100" uly="80" xml:id="zone-n-bbbbbbbb-0001-0000-0000-000000000002"/>
+        <zone lrx="270" lry="95" points="220,80 270,80 270,95 220,95" ulx="220" uly="80" xml:id="zone-n-bbbbbbbb-0001-0000-0000-000000000003"/>
+        <zone lrx="110" lry="195" points="30,180 110,180 110,195 30,195" ulx="30" uly="180" xml:id="zone-n-bbbbbbbb-0002-0000-0000-000000000001"/>
+        <zone lrx="270" lry="195" points="160,180 270,180 270,195 160,195" ulx="160" uly="180" xml:id="zone-n-bbbbbbbb-0002-0000-0000-000000000002"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-syl-aaaaaaaa-0001-0000-0000-000000000001" xml:id="syl-aaaaaaaa-0001-0000-0000-000000000001">
+                  <syl wordpos="i">Do</syl>
+                  <neume facs="#zone-n-bbbbbbbb-0001-0000-0000-000000000001" type="punctum" xml:id="n-bbbbbbbb-0001-0000-0000-000000000001"/>
+                </syllable>
+                <syllable facs="#zone-syl-aaaaaaaa-0001-0000-0000-000000000002" xml:id="syl-aaaaaaaa-0001-0000-0000-000000000002">
+                  <syl wordpos="m">mi</syl>
+                  <neume facs="#zone-n-bbbbbbbb-0001-0000-0000-000000000002" type="clivis" xml:id="n-bbbbbbbb-0001-0000-0000-000000000002"/>
+                </syllable>
+                <syllable facs="#zone-syl-aaaaaaaa-0001-0000-0000-000000000003" xml:id="syl-aaaaaaaa-0001-0000-0000-000000000003">
+                  <syl wordpos="t">ne</syl>
+                  <neume facs="#zone-n-bbbbbbbb-0001-0000-0000-000000000003" type="punctum" xml:id="n-bbbbbbbb-0001-0000-0000-000000000003"/>
+                </syllable>
+                <lb facs="#zone-line-2" n="2"/>
+                <syllable facs="#zone-syl-aaaaaaaa-0002-0000-0000-000000000001" xml:id="syl-aaaaaaaa-0002-0000-0000-000000000001">
+                  <syl wordpos="i">san</syl>
+                  <neume facs="#zone-n-bbbbbbbb-0002-0000-0000-000000000001" type="virga" xml:id="n-bbbbbbbb-0002-0000-0000-000000000001"/>
+                </syllable>
+                <syllable facs="#zone-syl-aaaaaaaa-0002-0000-0000-000000000002" xml:id="syl-aaaaaaaa-0002-0000-0000-000000000002">
+                  <syl wordpos="t">ctus</syl>
+                  <neume facs="#zone-n-bbbbbbbb-0002-0000-0000-000000000002" type="punctum" xml:id="n-bbbbbbbb-0002-0000-0000-000000000002"/>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

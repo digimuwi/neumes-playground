@@ -1,4 +1,4 @@
-"""Tests for training data contribution endpoint and JSON storage."""
+"""Tests for training data contribution endpoint and MEI storage."""
 
 import base64
 import json
@@ -12,13 +12,39 @@ from PIL import Image
 
 from htr_service.api import app
 from htr_service.contribution import storage as contrib_storage
-from htr_service.contribution.storage import list_contributions
+from htr_service.contribution.storage import list_contributions, read_document
 from htr_service.models.types import (
     ContributionAnnotations,
     LineInput,
     NeumeInput,
     SyllableInput,
 )
+
+
+def _load_stored(contribution_dir: Path) -> dict:
+    """Load stored annotations as a dict in the legacy JSON shape.
+
+    Reads via the storage layer so it works regardless of whether the
+    contribution is stored as .mei or legacy .json.
+    """
+    doc = read_document(contribution_dir)
+    return {
+        "image": {
+            "filename": doc.image.filename,
+            "width": doc.image.width,
+            "height": doc.image.height,
+        },
+        "lines": [line.model_dump() for line in doc.lines],
+        "neumes": [neume.model_dump() for neume in doc.neumes],
+    }
+
+
+def _annotations_exists(contribution_dir: Path) -> bool:
+    """True if either .mei or legacy .json annotations file exists."""
+    return (
+        (contribution_dir / "annotations.mei").exists()
+        or (contribution_dir / "annotations.json").exists()
+    )
 
 
 @pytest.fixture
@@ -90,10 +116,10 @@ class TestContributeEndpoint:
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / data["id"]
         assert contribution_dir.exists()
         assert (contribution_dir / "image.png").exists()
-        assert (contribution_dir / "annotations.json").exists()
+        assert _annotations_exists(contribution_dir)
 
-        # Verify annotations.json content
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        # Verify stored annotations content
+        stored = _load_stored(contribution_dir)
         assert stored["image"] == {"filename": "image.png", "width": 200, "height": 300}
         assert len(stored["lines"]) == 1
         assert len(stored["lines"][0]["syllables"]) == 2
@@ -116,7 +142,7 @@ class TestContributeEndpoint:
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / data["id"]
         assert (contribution_dir / "image.jpg").exists()
 
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert stored["image"]["filename"] == "image.jpg"
 
     def test_contribution_only_syllables(self, client, valid_image_bytes, cleanup_contributions):
@@ -142,7 +168,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert len(stored["lines"]) == 1
         assert stored["neumes"] == []
 
@@ -164,7 +190,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert stored["lines"] == []
         assert len(stored["neumes"]) == 1
         assert stored["neumes"][0]["type"] == "punctum"
@@ -195,7 +221,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert len(stored["neumes"]) == 2
         assert stored["neumes"][0]["type"] == "punctum"
         assert stored["neumes"][1]["type"] == "clivis"
@@ -225,7 +251,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         syllables = stored["lines"][0]["syllables"]
         assert syllables[0]["text"] == "Do-"
         assert syllables[1]["text"] == "mi-"
@@ -251,7 +277,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         types = [n["type"] for n in stored["neumes"]]
         assert types == ["punctum", "custom-new-type", "virga-strata"]
 
@@ -317,7 +343,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert stored["image"]["filename"] == "image.png"
         assert stored["image"]["width"] == 200
         assert stored["image"]["height"] == 300
@@ -345,7 +371,7 @@ class TestContributeEndpoint:
         assert response.status_code == 201
 
         contribution_dir = contrib_storage.CONTRIBUTIONS_DIR / response.json()["id"]
-        stored = json.loads((contribution_dir / "annotations.json").read_text())
+        stored = _load_stored(contribution_dir)
         assert stored["lines"][0]["syllables"][0]["text"] == ""
 
 
@@ -626,9 +652,7 @@ class TestUpdateContributionEndpoint:
         assert data["message"] == "Contribution updated successfully"
 
         # Verify stored file
-        stored = json.loads(
-            (self.contrib_dir / contrib_id / "annotations.json").read_text()
-        )
+        stored = _load_stored(self.contrib_dir / contrib_id)
         # Image metadata preserved
         assert stored["image"] == {"filename": "image.png", "width": 200, "height": 300}
         # Annotations replaced
@@ -714,9 +738,7 @@ class TestUpdateContributionEndpoint:
         assert response.status_code == 412
         assert "modified by someone else" in response.json()["detail"]
         # Ensure the intervening write was NOT reverted
-        stored = json.loads(
-            (self.contrib_dir / contrib_id / "annotations.json").read_text()
-        )
+        stored = _load_stored(self.contrib_dir / contrib_id)
         assert len(stored["neumes"]) == 1
 
     def test_update_without_if_match_still_works(self):

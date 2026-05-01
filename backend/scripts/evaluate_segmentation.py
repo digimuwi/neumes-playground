@@ -201,9 +201,11 @@ def load_contributions() -> list[tuple[str, Path]]:
     for entry in sorted(CONTRIBUTIONS_DIR.iterdir()):
         if not entry.is_dir():
             continue
-        ann = entry / "annotations.json"
+        has_ann = (entry / "annotations.mei").is_file() or (
+            entry / "annotations.json"
+        ).is_file()
         has_img = (entry / "image.jpg").is_file() or (entry / "image.png").is_file()
-        if ann.is_file() and has_img:
+        if has_ann and has_img:
             results.append((entry.name, entry))
     return results
 
@@ -248,11 +250,10 @@ def run_evaluation(iou_threshold: float = 0.5) -> None:
         image_path = find_image(cpath)
         image = Image.open(image_path).convert("RGB")
 
-        annotations = json.loads(
-            (cpath / "annotations.json").read_text(encoding="utf-8")
-        )
-        gt_lines = annotations.get("lines", [])
-        gt_neumes = annotations.get("neumes", [])
+        from htr_service.contribution.storage import read_document
+        doc = read_document(cpath)
+        gt_lines = [line.model_dump() for line in doc.lines]
+        gt_neumes = [neume.model_dump() for neume in doc.neumes]
 
         if not gt_lines:
             logger.info("  skipping (no ground-truth lines)")

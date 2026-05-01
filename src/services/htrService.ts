@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Annotation, Rectangle, LineBoundary, OcrProgressEvent } from '../state/types';
-import { computeTextLines } from '../hooks/useTextLines';
-import { normalizePolygon, denormalizePolygon, rectToPolygon, polygonBounds } from '../utils/polygonUtils';
+import { normalizePolygon, rectToPolygon } from '../utils/polygonUtils';
+import { annotationsToMEI, meiToAnnotations } from '../utils/meiIO';
 import { apiFetch } from './apiFetch';
 
 const HTR_BASE_URL = import.meta.env.VITE_HTR_BASE_URL
@@ -241,26 +241,6 @@ export function responseToAnnotations(data: RecognitionResponse, imageDimensions
 
 // --- Contribution types ---
 
-interface ContributionSyllable {
-  text: string;
-  boundary: number[][];
-}
-
-interface ContributionLine {
-  boundary: number[][];
-  syllables: ContributionSyllable[];
-}
-
-interface ContributionNeume {
-  type: string;
-  bbox: BBox;
-}
-
-interface ContributionAnnotations {
-  lines: ContributionLine[];
-  neumes: ContributionNeume[];
-}
-
 interface ContributionResponse {
   id: string;
   message: string;
@@ -300,97 +280,20 @@ async function imageDataUrlToBlob(imageDataUrl: string): Promise<{ blob: Blob; d
 }
 
 /**
- * Transform frontend annotations to backend contribution format.
- * Groups syllables into lines with polygon boundaries, converts to pixels.
- */
-function transformAnnotationsForContribution(
-  annotations: Annotation[],
-  dimensions: ImageDimensions,
-  storedLineBoundaries: LineBoundary[]
-): ContributionAnnotations {
-  const textLines = computeTextLines(annotations);
-
-  // Build a lookup from syllable ID to stored line boundary
-  const syllableToLineBoundary = new Map<string, number[][]>();
-  for (const lb of storedLineBoundaries) {
-    for (const sid of lb.syllableIds) {
-      syllableToLineBoundary.set(sid, lb.boundary);
-    }
-  }
-
-  const lines: ContributionLine[] = textLines.map(line => {
-    // Try to find a stored line boundary via any syllable in the cluster
-    let lineBoundary: number[][] | null = null;
-    for (const syllable of line.syllables) {
-      const stored = syllableToLineBoundary.get(syllable.id);
-      if (stored) {
-        lineBoundary = stored;
-        break;
-      }
-    }
-
-    // Fallback: compute bounding polygon from syllable polygons
-    if (!lineBoundary) {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const syllable of line.syllables) {
-        const b = polygonBounds(syllable.polygon);
-        if (b.minX < minX) minX = b.minX;
-        if (b.minY < minY) minY = b.minY;
-        if (b.maxX > maxX) maxX = b.maxX;
-        if (b.maxY > maxY) maxY = b.maxY;
-      }
-      lineBoundary = [[minX, minY], [maxX, minY], [maxX, maxY], [minX, maxY]];
-    }
-
-    return {
-      boundary: denormalizePolygon(lineBoundary, dimensions),
-      syllables: line.syllables.map(syllable => ({
-        text: syllable.text || '',
-        boundary: denormalizePolygon(syllable.polygon, dimensions),
-      })),
-    };
-  });
-
-  // Neumes: convert polygon back to bbox for backend
-  const neumes: ContributionNeume[] = annotations
-    .filter(a => a.type === 'neume')
-    .map(neume => {
-      const bounds = polygonBounds(neume.polygon);
-      return {
-        type: neume.neumeType || 'unknown',
-        bbox: {
-          x: Math.round(bounds.minX * dimensions.width),
-          y: Math.round(bounds.minY * dimensions.height),
-          width: Math.max(1, Math.round((bounds.maxX - bounds.minX) * dimensions.width)),
-          height: Math.max(1, Math.round((bounds.maxY - bounds.minY) * dimensions.height)),
-        },
-      };
-    });
-
-  return { lines, neumes };
-}
-
-/**
- * Submit training data contribution to the backend.
- * Transforms annotations from frontend format to backend format and sends to /contribute.
+ * Submit training data contribution to the backend as MEI.
  */
 export async function contributeTrainingData(
   imageDataUrl: string,
   annotations: Annotation[],
   lineBoundaries: LineBoundary[] = []
 ): Promise<ContributionResponse> {
-  // Convert image data URL to blob and get dimensions
   const { blob, dimensions } = await imageDataUrlToBlob(imageDataUrl);
+  const meiXml = annotationsToMEI(annotations, lineBoundaries, dimensions, 'image.jpg');
 
-  // Transform annotations to backend format
-  const contributionAnnotations = transformAnnotationsForContribution(annotations, dimensions, lineBoundaries);
-
-  // Build form data
   const formData = new FormData();
   formData.append('image', blob, 'image.jpg');
-  formData.append('annotations', JSON.stringify(contributionAnnotations));
+  formData.append('mei', meiXml);
 
-  // Send request
   const response = await apiFetch(`${HTR_BASE_URL}/contribute`, {
     method: 'POST',
     body: formData,
@@ -426,8 +329,7 @@ export interface ContributionSummary {
 interface ContributionDetailResponse {
   id: string;
   image: { filename: string; width: number; height: number; data_url: string };
-  lines: Array<{ boundary: number[][]; syllables: Array<{ text: string; boundary: number[][] }> }>;
-  neumes: Array<{ type: string; bbox: BBox }>;
+  mei: string;
   version: string;
 }
 
@@ -464,11 +366,7 @@ export async function getContribution(id: string): Promise<ContributionData> {
   }
 
   const detail: ContributionDetailResponse = await response.json();
-  const dimensions: ImageDimensions = { width: detail.image.width, height: detail.image.height };
-  const { annotations, lineBoundaries } = responseToAnnotations(
-    detail as unknown as RecognitionResponse,
-    dimensions,
-  );
+  const { annotations, lineBoundaries } = meiToAnnotations(detail.mei);
 
   return {
     imageDataUrl: detail.image.data_url,
@@ -561,15 +459,15 @@ export async function updateContribution(
   expectedVersion?: string,
 ): Promise<ContributionResponse> {
   const { dimensions } = await imageDataUrlToBlob(imageDataUrl);
-  const contributionAnnotations = transformAnnotationsForContribution(annotations, dimensions, lineBoundaries);
+  const meiXml = annotationsToMEI(annotations, lineBoundaries, dimensions, 'image.jpg');
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const headers: Record<string, string> = { 'Content-Type': 'text/xml' };
   if (expectedVersion) headers['If-Match'] = `"${expectedVersion}"`;
 
   const response = await apiFetch(`${HTR_BASE_URL}/contributions/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers,
-    body: JSON.stringify(contributionAnnotations),
+    body: meiXml,
   });
 
   if (!response.ok) {

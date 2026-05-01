@@ -211,15 +211,31 @@ class ImageDetail(BaseModel):
 
 
 class ContributionDetail(BaseModel):
-    """Full contribution data including base64 image."""
+    """Full contribution data including base64 image and canonical MEI."""
 
     id: str = Field(..., description="Contribution UUID")
     image: ImageDetail = Field(..., description="Image with base64 data URL")
-    lines: list[LineInput] = Field(default_factory=list, description="Line annotations")
-    neumes: list[NeumeInput] = Field(default_factory=list, description="Neume annotations")
+    mei: str = Field(
+        ...,
+        description="Canonical MEI 5.0 XML string (the on-disk source of truth)",
+    )
+    lines: list[LineInput] = Field(
+        default_factory=list,
+        description="Flat line annotations parsed from MEI (convenience for legacy callers)",
+    )
+    neumes: list[NeumeInput] = Field(
+        default_factory=list,
+        description="Flat neume annotations parsed from MEI (convenience for legacy callers)",
+    )
     version: str = Field(
         ...,
-        description="sha256 of annotations.json; send back as If-Match on the next update",
+        description="sha256 of canonical MEI bytes; send back as If-Match on the next update",
     )
+
+
+class MEIBody(BaseModel):
+    """JSON wrapper for an MEI string (for PUT /contributions/{id})."""
+
+    mei: str = Field(..., description="MEI 5.0 XML string")
 
 

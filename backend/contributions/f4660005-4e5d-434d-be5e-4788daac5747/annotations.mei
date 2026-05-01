@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="1236" lry="218" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="218px" target="image.png" width="1236px"/>
+        <zone lrx="1185" lry="186" points="89,98 1185,98 1185,186 89,186" ulx="89" uly="98" xml:id="zone-line-1"/>
+        <zone lrx="218" lry="186" points="89,98 89,186 218,186 218,98" ulx="89" uly="98" xml:id="zone-syl-00000001-0001-0000-0000-000000000000"/>
+        <zone lrx="347" lry="186" points="218,98 218,186 347,186 347,98" ulx="218" uly="98" xml:id="zone-syl-00000001-0002-0000-0000-000000000000"/>
+        <zone lrx="429" lry="186" points="367,98 367,186 429,186 429,98" ulx="367" uly="98" xml:id="zone-syl-00000001-0003-0000-0000-000000000000"/>
+        <zone lrx="506" lry="186" points="439,98 439,186 506,186 506,98" ulx="439" uly="98" xml:id="zone-syl-00000001-0004-0000-0000-000000000000"/>
+        <zone lrx="589" lry="186" points="516,98 516,186 589,186 589,98" ulx="516" uly="98" xml:id="zone-syl-00000001-0005-0000-0000-000000000000"/>
+        <zone lrx="619" lry="186" points="589,98 589,186 619,186 619,98" ulx="589" uly="98" xml:id="zone-syl-00000001-0006-0000-0000-000000000000"/>
+        <zone lrx="692" lry="186" points="619,98 619,186 692,186 692,98" ulx="619" uly="98" xml:id="zone-syl-00000001-0007-0000-0000-000000000000"/>
+        <zone lrx="774" lry="186" points="692,98 692,186 774,186 774,98" ulx="692" uly="98" xml:id="zone-syl-00000001-0008-0000-0000-000000000000"/>
+        <zone lrx="887" lry="186" points="784,98 784,186 887,186 887,98" ulx="784" uly="98" xml:id="zone-syl-00000001-0009-0000-0000-000000000000"/>
+        <zone lrx="964" lry="186" points="887,98 887,186 964,186 964,98" ulx="887" uly="98" xml:id="zone-syl-00000001-0010-0000-0000-000000000000"/>
+        <zone lrx="1037" lry="186" points="964,98 964,186 1037,186 1037,98" ulx="964" uly="98" xml:id="zone-syl-00000001-0011-0000-0000-000000000000"/>
+        <zone lrx="1185" lry="186" points="1037,98 1037,186 1185,186 1185,98" ulx="1037" uly="98" xml:id="zone-syl-00000001-0012-0000-0000-000000000000"/>
+        <zone lrx="1054" lry="85" points="1022,52 1054,52 1054,85 1022,85" ulx="1022" uly="52" xml:id="zone-n-n0000001-0000-0000-0000-000000000000"/>
+        <zone lrx="844" lry="75" points="820,64 844,64 844,75 820,75" ulx="820" uly="64" xml:id="zone-n-n0000002-0000-0000-0000-000000000000"/>
+        <zone lrx="963" lry="84" points="926,45 963,45 963,84 926,84" ulx="926" uly="45" xml:id="zone-n-n0000003-0000-0000-0000-000000000000"/>
+        <zone lrx="1169" lry="89" points="1110,50 1169,50 1169,89 1110,89" ulx="1110" uly="50" xml:id="zone-n-n0000004-0000-0000-0000-000000000000"/>
+        <zone lrx="416" lry="92" points="387,56 416,56 416,92 387,92" ulx="387" uly="56" xml:id="zone-n-n0000005-0000-0000-0000-000000000000"/>
+        <zone lrx="528" lry="93" points="480,63 528,63 528,93 480,93" ulx="480" uly="63" xml:id="zone-n-n0000006-0000-0000-0000-000000000000"/>
+        <zone lrx="327" lry="91" points="296,57 327,57 327,91 296,91" ulx="296" uly="57" xml:id="zone-n-n0000007-0000-0000-0000-000000000000"/>
+        <zone lrx="207" lry="95" points="164,64 207,64 207,95 164,95" ulx="164" uly="64" xml:id="zone-n-n0000008-0000-0000-0000-000000000000"/>
+        <zone lrx="639" lry="77" points="583,36 639,36 639,77 583,77" ulx="583" uly="36" xml:id="zone-n-n0000009-0000-0000-0000-000000000000"/>
+        <zone lrx="685" lry="77" points="669,70 685,70 685,77 669,77" ulx="669" uly="70" xml:id="zone-n-n0000010-0000-0000-0000-000000000000"/>
+        <zone lrx="745" lry="74" points="726,66 745,66 745,74 726,74" ulx="726" uly="66" xml:id="zone-n-n0000011-0000-0000-0000-000000000000"/>
+        <zone lrx="234" lry="56" points="215,35 234,35 234,56 215,56" ulx="215" uly="35" xml:id="zone-n-n0000012-0000-0000-0000-000000000000"/>
+        <zone lrx="272" lry="58" points="234,39 272,39 272,58 234,58" ulx="234" uly="39" xml:id="zone-n-n0000013-0000-0000-0000-000000000000"/>
+        <zone lrx="345" lry="53" points="319,33 345,33 345,53 319,53" ulx="319" uly="33" xml:id="zone-n-n0000014-0000-0000-0000-000000000000"/>
+        <zone lrx="435" lry="46" points="417,29 435,29 435,46 417,46" ulx="417" uly="29" xml:id="zone-n-n0000015-0000-0000-0000-000000000000"/>
+        <zone lrx="734" lry="59" points="699,39 734,39 734,59 699,59" ulx="699" uly="39" xml:id="zone-n-n0000016-0000-0000-0000-000000000000"/>
+        <zone lrx="973" lry="47" points="951,29 973,29 973,47 951,47" ulx="951" uly="29" xml:id="zone-n-n0000017-0000-0000-0000-000000000000"/>
+        <zone lrx="1031" lry="50" points="1018,32 1031,32 1031,50 1018,50" ulx="1018" uly="32" xml:id="zone-n-n0000018-0000-0000-0000-000000000000"/>
+        <zone lrx="1074" lry="46" points="1050,26 1074,26 1074,46 1050,46" ulx="1050" uly="26" xml:id="zone-n-n0000019-0000-0000-0000-000000000000"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-syl-00000001-0001-0000-0000-000000000000" xml:id="syl-00000001-0001-0000-0000-000000000000">
+                  <syl wordpos="i">sem</syl>
+                  <neume facs="#zone-n-n0000008-0000-0000-0000-000000000000" type="virga" xml:id="n-n0000008-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000012-0000-0000-0000-000000000000" type="celeriter" xml:id="n-n0000012-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0002-0000-0000-000000000000" xml:id="syl-00000001-0002-0000-0000-000000000000">
+                  <syl wordpos="t">per</syl>
+                  <neume facs="#zone-n-n0000013-0000-0000-0000-000000000000" type="mediocriter" xml:id="n-n0000013-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000007-0000-0000-0000-000000000000" type="clivis" xml:id="n-n0000007-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000014-0000-0000-0000-000000000000" type="celeriter" xml:id="n-n0000014-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0003-0000-0000-000000000000" xml:id="syl-00000001-0003-0000-0000-000000000000">
+                  <syl wordpos="s">et</syl>
+                  <neume facs="#zone-n-n0000005-0000-0000-0000-000000000000" type="clivis" xml:id="n-n0000005-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000015-0000-0000-0000-000000000000" type="celeriter" xml:id="n-n0000015-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0004-0000-0000-000000000000" xml:id="syl-00000001-0004-0000-0000-000000000000">
+                  <syl wordpos="s">in</syl>
+                  <neume facs="#zone-n-n0000006-0000-0000-0000-000000000000" type="virga" xml:id="n-n0000006-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0005-0000-0000-000000000000" xml:id="syl-00000001-0005-0000-0000-000000000000">
+                  <syl wordpos="i">sa</syl>
+                  <neume facs="#zone-n-n0000009-0000-0000-0000-000000000000" type="pes" xml:id="n-n0000009-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0006-0000-0000-000000000000" xml:id="syl-00000001-0006-0000-0000-000000000000">
+                  <syl wordpos="m">e</syl>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0007-0000-0000-000000000000" xml:id="syl-00000001-0007-0000-0000-000000000000">
+                  <syl wordpos="m">cu</syl>
+                  <neume facs="#zone-n-n0000010-0000-0000-0000-000000000000" type="punctum" xml:id="n-n0000010-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0008-0000-0000-000000000000" xml:id="syl-00000001-0008-0000-0000-000000000000">
+                  <syl wordpos="t">la</syl>
+                  <neume facs="#zone-n-n0000016-0000-0000-0000-000000000000" type="equaliter" xml:id="n-n0000016-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000011-0000-0000-0000-000000000000" type="punctum" xml:id="n-n0000011-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0009-0000-0000-000000000000" xml:id="syl-00000001-0009-0000-0000-000000000000">
+                  <syl wordpos="i">sac</syl>
+                  <neume facs="#zone-n-n0000002-0000-0000-0000-000000000000" type="punctum" xml:id="n-n0000002-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0010-0000-0000-000000000000" xml:id="syl-00000001-0010-0000-0000-000000000000">
+                  <syl wordpos="m">cu</syl>
+                  <neume facs="#zone-n-n0000003-0000-0000-0000-000000000000" type="clivis" xml:id="n-n0000003-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000017-0000-0000-0000-000000000000" type="celeriter" xml:id="n-n0000017-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0011-0000-0000-000000000000" xml:id="syl-00000001-0011-0000-0000-000000000000">
+                  <syl wordpos="m">lo</syl>
+                  <neume facs="#zone-n-n0000018-0000-0000-0000-000000000000" type="inferius" xml:id="n-n0000018-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000001-0000-0000-0000-000000000000" type="clivis" xml:id="n-n0000001-0000-0000-0000-000000000000"/>
+                </syllable>
+                <syllable facs="#zone-syl-00000001-0012-0000-0000-000000000000" xml:id="syl-00000001-0012-0000-0000-000000000000">
+                  <syl wordpos="t">rum</syl>
+                  <neume facs="#zone-n-n0000019-0000-0000-0000-000000000000" type="celeriter" xml:id="n-n0000019-0000-0000-0000-000000000000"/>
+                  <neume facs="#zone-n-n0000004-0000-0000-0000-000000000000" type="pes" xml:id="n-n0000004-0000-0000-0000-000000000000"/>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

@@ -47,7 +47,7 @@ export function Toolbar() {
 
   const handleExport = async () => {
     if (state.imageDataUrl) {
-      await exportMEI(state.annotations, state.imageDataUrl);
+      await exportMEI(state.annotations, state.imageDataUrl, state.lineBoundaries);
     }
   };
 

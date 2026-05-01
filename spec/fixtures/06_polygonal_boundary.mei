@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mei meiversion="5.0" xmlns="http://www.music-encoding.org/ns/mei">
+  <meiHead>
+    <fileDesc>
+      <titleStmt>
+        <title>Neumes Playground contribution</title>
+      </titleStmt>
+      <pubStmt/>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <facsimile>
+      <surface lrx="400" lry="200" ulx="0" uly="0" xml:id="surface-1">
+        <graphic height="200px" target="image.jpg" width="400px"/>
+        <zone lrx="380" lry="125" points="20,100 380,108 380,125 20,117" ulx="20" uly="100" xml:id="zone-line-1"/>
+        <zone lrx="120" lry="119" points="20,100 120,102 120,117 20,115" ulx="20" uly="100" xml:id="zone-syl-99999999-0001-0000-0000-000000000001"/>
+        <zone lrx="240" lry="121" points="140,103 240,105 240,119 140,117" ulx="140" uly="103" xml:id="zone-syl-99999999-0001-0000-0000-000000000002"/>
+        <zone lrx="380" lry="125" points="260,106 380,108 380,123 260,121" ulx="260" uly="106" xml:id="zone-syl-99999999-0001-0000-0000-000000000003"/>
+        <zone lrx="100" lry="95" points="40,80 100,82 100,93 40,91" ulx="40" uly="80" xml:id="zone-n-99999999-0002-0000-0000-000000000001"/>
+        <zone lrx="220" lry="98" points="160,82 220,84 220,96 160,94" ulx="160" uly="82" xml:id="zone-n-99999999-0002-0000-0000-000000000002"/>
+        <zone lrx="360" lry="100" points="280,84 360,86 360,98 280,96" ulx="280" uly="84" xml:id="zone-n-99999999-0002-0000-0000-000000000003"/>
+      </surface>
+    </facsimile>
+    <body>
+      <mdiv>
+        <score>
+          <section>
+            <staff>
+              <layer>
+                <lb facs="#zone-line-1" n="1"/>
+                <syllable facs="#zone-syl-99999999-0001-0000-0000-000000000001" xml:id="syl-99999999-0001-0000-0000-000000000001">
+                  <syl wordpos="i">Glo</syl>
+                  <neume facs="#zone-n-99999999-0002-0000-0000-000000000001" type="punctum" xml:id="n-99999999-0002-0000-0000-000000000001"/>
+                </syllable>
+                <syllable facs="#zone-syl-99999999-0001-0000-0000-000000000002" xml:id="syl-99999999-0001-0000-0000-000000000002">
+                  <syl wordpos="m">ri</syl>
+                  <neume facs="#zone-n-99999999-0002-0000-0000-000000000002" type="virga" xml:id="n-99999999-0002-0000-0000-000000000002"/>
+                </syllable>
+                <syllable facs="#zone-syl-99999999-0001-0000-0000-000000000003" xml:id="syl-99999999-0001-0000-0000-000000000003">
+                  <syl wordpos="t">a</syl>
+                  <neume facs="#zone-n-99999999-0002-0000-0000-000000000003" type="clivis" xml:id="n-99999999-0002-0000-0000-000000000003"/>
+                </syllable>
+              </layer>
+            </staff>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>

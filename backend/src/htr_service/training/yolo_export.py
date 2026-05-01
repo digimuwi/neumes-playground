@@ -23,7 +23,7 @@ from ..neume_registry import (
     load_neume_class_map,
     load_neume_registry,
 )
-from ..contribution.storage import CONTRIBUTIONS_DIR, list_contributions
+from ..contribution.storage import CONTRIBUTIONS_DIR, list_contributions, read_document
 from ..pipeline.text_masking import mask_polygon_regions
 from ..pipeline.tiling import TILE_SIZE_DEFAULT, TILE_SIZE_MAX, TILE_SIZE_MIN, TILE_SIZE_MULTIPLIER, generate_tile_grid
 
@@ -168,11 +168,18 @@ def _export_single_contribution(
 
     Returns the number of tiles exported (0 if the contribution was skipped).
     """
-    annotations_path = contribution_path / "annotations.json"
-    with open(annotations_path, encoding="utf-8") as f:
-        annotations = json.load(f)
+    doc = read_document(contribution_path)
+    annotations = {
+        "image": {
+            "filename": doc.image.filename,
+            "width": doc.image.width,
+            "height": doc.image.height,
+        },
+        "lines": [line.model_dump() for line in doc.lines],
+        "neumes": [neume.model_dump() for neume in doc.neumes],
+    }
 
-    neumes = annotations.get("neumes", [])
+    neumes = annotations["neumes"]
     if not neumes:
         logger.info("Skipping %s: no neumes", contribution_id)
         return 0
@@ -194,13 +201,11 @@ def _export_single_contribution(
         logger.info("Skipping %s: all neume types unknown", contribution_id)
         return 0
 
-    # Load image
     image_filename = annotations["image"]["filename"]
     image_path = contribution_path / image_filename
     image = Image.open(image_path).convert("RGB")
 
-    # Collect syllable polygons from annotations for masking
-    lines = annotations.get("lines", [])
+    lines = annotations["lines"]
     syllable_polygons = []
     line_boundaries = []
     for line in lines:
