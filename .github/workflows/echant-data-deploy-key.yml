@@ -49,17 +49,25 @@ jobs:
               echo "=== /opt/neumes-playground origin (for reference) ==="
               git -C /opt/neumes-playground remote -v
               echo ""
-              echo "=== Public SSH keys on this server ==="
-              for k in /root/.ssh/id_*.pub; do
-                [ -f "$k" ] || continue
-                echo "--- $k ---"
-                cat "$k"
+              echo "=== /root/.ssh contents ==="
+              ls -la /root/.ssh/ 2>&1 || echo "(no /root/.ssh)"
+              echo ""
+              echo "=== All .pub files anywhere likely ==="
+              find /root /home /etc/ssh -name "*.pub" -type f 2>/dev/null | while read pk; do
+                echo "--- $pk ---"
+                cat "$pk"
               done
-              # Also dump default agent keys
-              if [ -n "${SSH_AUTH_SOCK:-}" ]; then
-                echo "=== ssh-agent keys ==="
-                ssh-add -L 2>/dev/null || echo "(no agent or no keys)"
-              fi
+              echo ""
+              echo "=== /root/.ssh/config (if any) ==="
+              cat /root/.ssh/config 2>&1 || echo "(no config)"
+              echo ""
+              echo "=== git config user/credential ==="
+              git -C /opt/neumes-playground config --get-all user.name || true
+              git -C /opt/neumes-playground config --get-all user.email || true
+              git -C /opt/neumes-playground config --get-all credential.helper || true
+              echo ""
+              echo "=== ssh -vT git@github.com (auth check) ==="
+              ssh -o StrictHostKeyChecking=accept-new -vT git@github.com 2>&1 | grep -E "Offering|Authenticated|Hi |denied|debug1: Will attempt key" | head -20
               exit 0
             fi
 
